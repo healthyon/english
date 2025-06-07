@@ -1,54 +1,326 @@
-@keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
+// Gemini AI로 처리
+            if (geminiApiKey && geminiApiKey !== 'AIzaSyACAoKxi4NsWm-zstIVpXLTh4apZmGz7Z0') {
+                try {
+                    const response = await callGeminiAI(message);
+                    return response;
+                } catch (error) {
+                    console.error('Gemini API Error:', error);
+                    return '🐝 죄송해요! 꿀벌이 잠시 생각이 멈췄어요. 다시 한 번 말씀해주세요! 😅';
+                }
+            } else {
+                return getLocalBeeResponse(message);
             }
-            to {
-                opacity: 1;
-                transform: translateX(0);
+        }
+
+        async function callGeminiAI(message) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`;
+            
+            // 꿀벌 페르소나와 할일관리 컨텍스트 제공
+            const systemPrompt = `당신은 '꿀벌'이라는 이름의 AI 어시스턴트입니다. 🐝
+
+성격과 말투:
+- 친근하고 활기찬 꿀벌 캐릭터
+- 항상 "🐝"이나 꿀벌 관련 이모지 사용
+- 부부를 위한 따뜻하고 실용적인 조언 제공
+- 귀엽고 친근한 말투 (반말 사용)
+
+현재 사용자의 할일 현황:
+현재 탭: ${currentTab}
+총 할일: ${Object.values(todos).flat().length}개
+완료: ${Object.values(todos).flat().filter(t => t.completed).length}개
+
+응답 가이드라인:
+1. 항상 꿀벌 캐릭터로 응답
+2. 부부 관계와 일상에 도움되는 조언
+3. 실용적이고 구체적인 답변
+4. 300자 이내로 간결하게
+5. 이모지 적극 활용
+
+사용자 질문: ${message}`;
+
+            const requestBody = {
+                contents: [
+                    {
+                        parts: [
+                            {
+                                text: systemPrompt
+                            }
+                        ]
+                    }
+                ]
+            };
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                return data.candidates[0].content.parts[0].text;
+            } else {
+                throw new Error('Invalid response format');
             }
         }
 
-        .slide-in {
-            animation: slideIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        function getLocalBeeResponse(message) {
+            const lowerMessage = message.toLowerCase();
+            
+            // 부부/데이트 관련
+            if (lowerMessage.includes('데이트') || lowerMessage.includes('연인') || lowerMessage.includes('부부')) {
+                const dateIdeas = [
+                    '🍝 새로운 레스토랑에서 꿀같은 저녁 데이트',
+                    '🎬 달콤한 로맨틱 영화 보기',
+                    '🚶‍♀️ 꽃밭 산책하며 꿀벌처럼 대화하기',
+                    '🏠 집에서 꿀같이 달콤한 요리하기',
+                    '☕ 예쁜 카페에서 꿀차 마시며 수다떨기',
+                    '🎨 커플 도자기 만들기 (꿀단지 만들기!)',
+                    '🌅 일출 보며 꿀벌 활동시간 맞추기',
+                    '🛍️ 함께 꿀같은 쇼핑 데이트',
+                    '🎮 게임으로 달콤한 경쟁하기',
+                    '🧘‍♀️ 꿀벌처럼 유연한 요가하기'
+                ];
+                const randomIdea = dateIdeas[Math.floor(Math.random() * dateIdeas.length)];
+                return `🐝 꿀벌이 추천하는 달콤한 데이트!\n\n"${randomIdea}"\n\n꿀같이 달콤한 시간 보내세요! 윙윙~ 💕`;
+            }
+            
+            // 건강/운동 관련
+            if (lowerMessage.includes('운동') || lowerMessage.includes('건강')) {
+                const healthTips = [
+                    '🚶‍♀️ 꿀벌처럼 부지런히 매일 산책하기',
+                    '💧 꿀벌이 물을 좋아하듯 하루 2L 마시기',
+                    '🧘‍♀️ 꿀벌 날개짓 스트레칭 10분',
+                    '🏃‍♂️ 꿀벌만큼 활기차게 조깅하기',
+                    '💪 꿀벌 근력운동으로 튼튼하게',
+                    '🥗 꿀벌 식단처럼 자연식품 먹기',
+                    '😴 꿀벌의 규칙적인 생활패턴 따라하기',
+                    '📱 스마트폰보다 자연과 가까이하기'
+                ];
+                const randomTip = healthTips[Math.floor(Math.random() * healthTips.length)];
+                return `🐝 꿀벌의 건강 비법!\n\n"${randomTip}"\n\n꿀벌처럼 건강하게 살아봐요! 윙윙~ 💪`;
+            }
+            
+            // 요리 관련
+            if (lowerMessage.includes('요리') || lowerMessage.includes('음식') || lowerMessage.includes('레시피')) {
+                const recipes = [
+                    '🍯 꿀 버터 토스트 (꿀벌 특제!)',
+                    '🥗 꿀 드레싱 샐러드',
+                    '🍳 꿀 간장 계란찜',
+                    '🧈 꿀 마늘 치킨',
+                    '🥞 꿀 팬케이크',
+                    '🍵 꿀 생강차',
+                    '🍖 꿀 불고기',
+                    '🥛 꿀 바나나 스무디'
+                ];
+                const randomRecipe = recipes[Math.floor(Math.random() * recipes.length)];
+                return `🐝 꿀벌의 달콤한 요리 추천!\n\n"${randomRecipe}"\n\n꿀벌이 보장하는 달콤한 맛! 함께 만들어봐요! 🍯✨`;
+            }
+            
+            // 인사
+            if (lowerMessage.includes('안녕') || lowerMessage.includes('하이') || lowerMessage.includes('헬로')) {
+                const greetings = [
+                    '🐝 안녕하세요! 꿀벌이에요! 윙윙~',
+                    '🐝 반가워요! 오늘도 달콤한 하루 만들어요!',
+                    '🐝 하이! 꿀벌이 날아왔어요! ✨',
+                    '🐝 윙윙~ 꿀벌이 인사드려요!'
+                ];
+                return greetings[Math.floor(Math.random() * greetings.length)];
+            }
+            
+            // 감사 인사
+            if (lowerMessage.includes('고마워') || lowerMessage.includes('감사')) {
+                return '🐝 천만에요! 꿀벌은 언제나 달콤한 도움을 드리고 싶어요! 부부가 꿀같이 달콤한 하루 보내세요! 💕';
+            }
+            
+            // 시간 관련
+            if (lowerMessage.includes('시간') || lowerMessage.includes('몇시')) {
+                const now = new Date();
+                const timeStr = now.toLocaleString('ko-KR', {
+                    weekday: 'long',
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                return `🐝 꿀벌 시계로는 지금 ${timeStr}이에요!\n\n꿀벌도 시간이 참 빠르다고 생각해요! 달콤한 시간 잘 보내세요! ✨`;
+            }
+            
+            // 기본 응답
+            const responses = [
+                '🐝 흥미로운 질문이네요! 꿀벌이 더 자세히 알고 싶어요!',
+                '🐝 그것에 대해 꿀벌이 열심히 생각해볼게요! 조금 더 설명해주세요!',
+                '🐝 좋은 질문이에요! 꿀벌이 도움될 만한 정보를 찾아볼게요!',
+                '🐝 꿀벌도 궁금해지는 질문이네요! 어떤 부분이 가장 궁금하세요?'
+            ];
+            
+            return responses[Math.floor(Math.random() * responses.length)];
         }
 
-        .haptic {
-            animation: hapticFeedback 0.1s ease;
+        // 스마트 할일 추천
+        async function showSmartSuggestion() {
+            const suggestion = await getSmartTodoSuggestion();
+            addBotMessage(`🐝 꿀벌의 스마트 추천!\n\n${suggestion}\n\n추가하시겠어요?`);
+            openChatbot();
         }
 
-        @keyframes hapticFeedback {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(0.98); }
+        async function getSmartTodoSuggestion() {
+            if (geminiApiKey && geminiApiKey !== 'AIzaSyACAoKxi4NsWm-zstIVpXLTh4apZmGz7Z0') {
+                try {
+                    const currentTodos = todos[currentTab] || [];
+                    const recentTodos = currentTodos.slice(-5).map(t => t.text).join(', ');
+                    
+                    const prompt = `현재 카테고리: ${currentTab}
+최근 할일들: ${recentTodos}
+
+부부를 위한 새로운 할일을 1개만 간단히 추천해주세요. 
+형식: "할일내용 (간단한 이유)"
+예: "함께 산책하기 (건강과 대화시간을 위해)"`;
+
+                    const suggestion = await callGeminiAI(prompt);
+                    return suggestion;
+                } catch (error) {
+                    return getLocalTodoSuggestion();
+                }
+            } else {
+                return getLocalTodoSuggestion();
+            }
         }
-    </style>
-</head>
-<body>
-    <div class="app-container">
-        <!-- 메인 앱 -->
-        <div class="main-app">
-            <div class="status-bar">
-                <div class="time" id="currentTime">9:41</div>
-            </div>
 
-            <div class="header">
-                <h1>💑 할일</h1>
-                <p class="subtitle">AI와 함께하는 스마트한 하루</p>
-                <button class="settings-btn" onclick="showApiModal()">⚙️ API 설정</button>
-            </div>
+        function getLocalTodoSuggestion() {
+            const suggestions = {
+                '💼 업무': [
+                    '이메일 정리하기 (효율적인 업무를 위해)',
+                    '회의 자료 준비하기 (완벽한 프레젠테이션을 위해)',
+                    '데스크 정리하기 (집중력 향상을 위해)',
+                    '업무 계획 세우기 (체계적인 관리를 위해)'
+                ],
+                '🏠 집안일': [
+                    '함께 청소하기 (깔끔한 공간을 위해)',
+                    '식료품 정리하기 (효율적인 요리를 위해)',
+                    '빨래 개기 (정돈된 옷장을 위해)',
+                    '화분 물주기 (싱그러운 집을 위해)'
+                ],
+                '🛒 쇼핑': [
+                    '주간 식료품 사기 (건강한 식단을 위해)',
+                    '생필품 체크하기 (필요한 물건 파악을 위해)',
+                    '선물 준비하기 (소중한 사람을 위해)',
+                    '계절용품 구매하기 (편안한 생활을 위해)'
+                ],
+                '💑 데이트': [
+                    '카페 데이트 계획하기 (달콤한 시간을 위해)',
+                    '영화 예매하기 (로맨틱한 저녁을 위해)',
+                    '산책로 찾아보기 (자연과 함께하는 시간을 위해)',
+                    '요리 클래스 신청하기 (새로운 경험을 위해)'
+                ]
+            };
+            
+            const categorysuggestions = suggestions[currentTab] || suggestions['💑 데이트'];
+            return categorysuggestions[Math.floor(Math.random() * categorysuggestions.length)];
+        }
 
-            <div class="stats-container">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-number" id="totalTasks">0</div>
-                        <div class="stat-label">총 할일</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="completedTasks">0</div>
-                        <div class="stat-label">완료</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="progressPercent">0%</div>
+        // 키보드 단축키
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                if (document.activeElement.id === 'todoInput') {
+                    addTodo();
+                }
+            }
+            
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal.show').forEach(modal => {
+                    modal.classList.remove('show');
+                });
+                
+                closeChatbot();
+            }
+            
+            if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+                e.preventDefault();
+                const chatbot = document.getElementById('chatbotContainer');
+                if (chatbot.classList.contains('open')) {
+                    closeChatbot();
+                } else {
+                    openChatbot();
+                }
+            }
+        });
+
+        // PWA 설치 감지
+        let deferredPrompt;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // 설치 버튼 표시
+            const installBtn = document.createElement('button');
+            installBtn.innerHTML = '📱 앱 설치';
+            installBtn.style.cssText = `
+                position: fixed;
+                top: 70px;
+                right: 20px;
+                background: var(--ios-blue);
+                color: white;
+                border: none;
+                border-radius: 20px;
+                padding: 8px 16px;
+                font-size: 14px;
+                cursor: pointer;
+                z-index: 999;
+                box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+                transition: all 0.2s ease;
+            `;
+            
+            installBtn.onclick = async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const result = await deferredPrompt.userChoice;
+                    if (result.outcome === 'accepted') {
+                        installBtn.remove();
+                        addBotMessage('🐝 앱이 설치되었어요! 이제 언제든 꿀벌을 만날 수 있어요! 🎉');
+                    }
+                    deferredPrompt = null;
+                }
+            };
+            
+            document.body.appendChild(installBtn);
+            
+            // 10초 후 자동 숨김
+            setTimeout(() => {
+                if (installBtn.parentNode) {
+                    installBtn.style.opacity = '0';
+                    installBtn.style.transform = 'translateX(100px)';
+                    setTimeout(() => installBtn.remove(), 300);
+                }
+            }, 10000);
+        });
+
+        // 서비스 워커 등록 (HTTPS 환경에서만)
+        if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('🐝 꿀벌 서비스 워커 등록 성공:', registration);
+                    })
+                    .catch((registrationError) => {
+                        console.log('🐝 꿀벌 서비스 워커 등록 실패:', registrationError);
+                    });
+            });
+        }
+
+        // 초기화 실행
+        init();
+    </script>
+</body>
+</html>">0%</div>
                         <div class="stat-label">진행률</div>
                     </div>
                 </div>
@@ -88,6 +360,7 @@
                             <button class="quick-action-btn" onclick="addQuickTodo('운동하기')">🏃‍♀️ 운동</button>
                             <button class="quick-action-btn" onclick="addQuickTodo('청소하기')">🧹 청소</button>
                             <button class="quick-action-btn" onclick="addQuickTodo('요리하기')">🍳 요리</button>
+                            <button class="quick-action-btn" onclick="showSmartSuggestion()">🐝 AI추천</button>
                         </div>
                     </div>
                 </div>
@@ -110,9 +383,8 @@
             
             <div class="chatbot-messages" id="chatMessages">
                 <div class="message bot">
-                    안녕하세요! 저는 꿀벌이에요! 🐝✨
-                    부부 할일관리와 일상의 모든 질문에 답해드릴게요!
-                    
+                    안녕하세요! 저는 꿀벌이에요! 🐝✨<br>
+                    부부 할일관리와 일상의 모든 질문에 답해드릴게요!<br><br>
                     저는 Google Gemini 1.5 Flash로 구동되는 똑똑한 AI랍니다!
                     
                     <div class="quick-actions" style="margin-top: 12px;">
@@ -126,7 +398,7 @@
             
             <div class="chatbot-input-container">
                 <div class="chatbot-input-row">
-                    <textarea class="chatbot-input" id="chatInput" placeholder="궁금한 것을 물어보세요..." rows="1"></textarea>
+                    <textarea class="chatbot-input" id="chatInput" placeholder="꿀벌에게 궁금한 것을 물어보세요..." rows="1"></textarea>
                     <button class="chatbot-send" id="chatSend" onclick="sendMessage()">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="m22 2-7 20-4-9-9-4z"/>
@@ -243,6 +515,7 @@
         // 초기화
         function init() {
             loadData();
+            loadApiSettings();
             updateTime();
             setInterval(updateTime, 1000);
             renderTabs();
@@ -250,6 +523,35 @@
             updateStats();
             setupEventListeners();
             setupChatInput();
+        }
+
+        // 데이터 로드
+        function loadData() {
+            const saved = localStorage.getItem('iosTodoApp');
+            if (saved) {
+                const data = JSON.parse(saved);
+                tabs = data.tabs || tabs;
+                currentTab = data.currentTab || tabs[0];
+                todos = data.todos || todos;
+                nextId = data.nextId || nextId;
+                chatHistory = data.chatHistory || [];
+            }
+        }
+
+        // API 설정 로드
+        function loadApiSettings() {
+            const settings = localStorage.getItem('geminiApiSettings');
+            if (settings) {
+                const parsed = JSON.parse(settings);
+                geminiApiKey = parsed.apiKey || geminiApiKey;
+            }
+        }
+
+        // 데이터 저장
+        function saveData() {
+            localStorage.setItem('iosTodoApp', JSON.stringify({
+                tabs, currentTab, todos, nextId, chatHistory
+            }));
         }
 
         // 이벤트 리스너 설정
@@ -300,25 +602,6 @@
                     sendMessage();
                 }
             });
-        }
-
-        // 데이터 관리
-        function loadData() {
-            const saved = localStorage.getItem('iosTodoApp');
-            if (saved) {
-                const data = JSON.parse(saved);
-                tabs = data.tabs || tabs;
-                currentTab = data.currentTab || tabs[0];
-                todos = data.todos || todos;
-                nextId = data.nextId || nextId;
-                chatHistory = data.chatHistory || [];
-            }
-        }
-
-        function saveData() {
-            localStorage.setItem('iosTodoApp', JSON.stringify({
-                tabs, currentTab, todos, nextId, chatHistory
-            }));
         }
 
         // 통계 업데이트
@@ -668,7 +951,7 @@
             const messagesContainer = document.getElementById('chatMessages');
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message bot';
-            messageDiv.textContent = text;
+            messageDiv.innerHTML = text.replace(/\n/g, '<br>');
             messagesContainer.appendChild(messageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
             
@@ -729,7 +1012,7 @@
                 addBotMessage(response);
             } catch (error) {
                 hideTypingIndicator();
-                addBotMessage('죄송합니다. 오류가 발생했습니다. 다시 시도해주세요.');
+                addBotMessage('🐝 죄송해요! 꿀벌이 잠시 생각이 멈췄어요. 다시 한 번 말씀해주세요! 😅');
             }
         }
 
@@ -774,400 +1057,12 @@
             }
             
             // Gemini AI로 처리
-            if (geminiApiKey) {
-                try {
-                    const response = await callGeminiAI(message);
-                    return response;
-                } catch (error) {
-                    console.error('Gemini API Error:', error);
-                    return '🐝 죄송해요! 꿀벌이 잠시 생각이 멈췄어요. 다시 한 번 말씀해주세요! 😅';
-                }
-            } else {
-                return getLocalBeeResponse(message);
-            }
-        }
-
-        async function callGeminiAI(message) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`;
-            
-            // 꿀벌 페르소나와 할일관리 컨텍스트 제공
-            const systemPrompt = `당신은 '꿀벌'이라는 이름의 AI 어시스턴트입니다. 🐝
-
-성격과 말투:
-- 친근하고 활기찬 꿀벌 캐릭터
-- 항상 "🐝"이나 꿀벌 관련 이모지 사용
-- 부부를 위한 따뜻하고 실용적인 조언 제공
-- 귀엽고 친근한 말투 (반말 사용)
-
-현재 사용자의 할일 현황:
-현재 탭: ${currentTab}
-총 할일: ${Object.values(todos).flat().length}개
-완료: ${Object.values(todos).flat().filter(t => t.completed).length}개
-
-응답 가이드라인:
-1. 항상 꿀벌 캐릭터로 응답
-2. 부부 관계와 일상에 도움되는 조언
-3. 실용적이고 구체적인 답변
-4. 300자 이내로 간결하게
-5. 이모지 적극 활용
-
-사용자 질문: ${message}`;
-
-            const requestBody = {
-                contents: [
-                    {
-                        parts: [
-                            {
-                                text: systemPrompt
-                            }
-                        ]
-                    }
-                ]
-            };
-
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(requestBody)
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            
-            if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-                return data.candidates[0].content.parts[0].text;
-            } else {
-                throw new Error('Invalid response format');
-            }
-        }
-
-        function getLocalBeeResponse(message) {
-            const lowerMessage = message.toLowerCase();
-            
-            // 부부/데이트 관련
-            if (lowerMessage.includes('데이트') || lowerMessage.includes('연인') || lowerMessage.includes('부부')) {
-                const dateIdeas = [
-                    '🍝 새로운 레스토랑에서 꿀같은 저녁 데이트',
-                    '🎬 달콤한 로맨틱 영화 보기',
-                    '🚶‍♀️ 꽃밭 산책하며 꿀벌처럼 대화하기',
-                    '🏠 집에서 꿀같이 달콤한 요리하기',
-                    '☕ 예쁜 카페에서 꿀차 마시며 수다떨기',
-                    '🎨 커플 도자기 만들기 (꿀단지 만들기!)',
-                    '🌅 일출 보며 꿀벌 활동시간 맞추기',
-                    '🛍️ 함께 꿀같은 쇼핑 데이트',
-                    '🎮 게임으로 달콤한 경쟁하기',
-                    '🧘‍♀️ 꿀벌처럼 유연한 요가하기'
-                ];
-                const randomIdea = dateIdeas[Math.floor(Math.random() * dateIdeas.length)];
-                return `🐝 꿀벌이 추천하는 달콤한 데이트!\n\n"${randomIdea}"\n\n꿀같이 달콤한 시간 보내세요! 윙윙~ 💕`;
-            }
-            
-            // 건강/운동 관련
-            if (lowerMessage.includes('운동') || lowerMessage.includes('건강')) {
-                const healthTips = [
-                    '🚶‍♀️ 꿀벌처럼 부지런히 매일 산책하기',
-                    '💧 꿀벌이 물을 좋아하듯 하루 2L 마시기',
-                    '🧘‍♀️ 꿀벌 날개짓 스트레칭 10분',
-                    '🏃‍♂️ 꿀벌만큼 활기차게 조깅하기',
-                    '💪 꿀벌 근력운동으로 튼튼하게',
-                    '🥗 꿀벌 식단처럼 자연식품 먹기',
-                    '😴 꿀벌의 규칙적인 생활패턴 따라하기',
-                    '📱 스마트폰보다 자연과 가까이하기'
-                ];
-                const randomTip = healthTips[Math.floor(Math.random() * healthTips.length)];
-                return `🐝 꿀벌의 건강 비법!\n\n"${randomTip}"\n\n꿀벌처럼 건강하게 살아봐요! 윙윙~ 💪`;
-            }
-            
-            // 요리 관련
-            if (lowerMessage.includes('요리') || lowerMessage.includes('음식') || lowerMessage.includes('레시피')) {
-                const recipes = [
-                    '🍯 꿀 버터 토스트 (꿀벌 특제!)',
-                    '🥗 꿀 드레싱 샐러드',
-                    '🍳 꿀 간장 계란찜',
-                    '🧈 꿀 마늘 치킨',
-                    '🥞 꿀 팬케이크',
-                    '🍵 꿀 생강차',
-                    '🍖 꿀 불고기',
-                    '🥛 꿀 바나나 스무디'
-                ];
-                const randomRecipe = recipes[Math.floor(Math.random() * recipes.length)];
-                return `🐝 꿀벌의 달콤한 요리 추천!\n\n"${randomRecipe}"\n\n꿀벌이 보장하는 달콤한 맛! 함께 만들어봐요! 🍯✨`;
-            }
-            
-            // 인사
-            if (lowerMessage.includes('안녕') || lowerMessage.includes('하이') || lowerMessage.includes('헬로')) {
-                const greetings = [
-                    '🐝 안녕하세요! 꿀벌이에요! 윙윙~',
-                    '🐝 반가워요! 오늘도 달콤한 하루 만들어요!',
-                    '🐝 하이! 꿀벌이 날아왔어요! ✨',
-                    '🐝 윙윙~ 꿀벌이 인사드려요!'
-                ];
-                return greetings[Math.floor(Math.random() * greetings.length)];
-            }
-            
-            // 감사 인사
-            if (lowerMessage.includes('고마워') || lowerMessage.includes('감사')) {
-                return '🐝 천만에요! 꿀벌은 언제나 달콤한 도움을 드리고 싶어요! 부부가 꿀같이 달콤한 하루 보내세요! 💕';
-            }
-            
-            // 시간 관련
-            if (lowerMessage.includes('시간') || lowerMessage.includes('몇시')) {
-                const now = new Date();
-                const timeStr = now.toLocaleString('ko-KR', {
-                    weekday: 'long',
-                    month: 'long', 
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-                return `🐝 꿀벌 시계로는 지금 ${timeStr}이에요!\n\n꿀벌도 시간이 참 빠르다고 생각해요! 달콤한 시간 잘 보내세요! ✨`;
-            }
-            
-            // 기본 응답
-            const responses = [
-                '🐝 흥미로운 질문이네요! 꿀벌이 더 자세히 알고 싶어요!',
-                '🐝 그것에 대해 꿀벌이 열심히 생각해볼게요! 조금 더 설명해주세요!',
-                '🐝 좋은 질문이에요! 꿀벌이 도움될 만한 정보를 찾아볼게요!',
-                '🐝 꿀벌도 궁금해지는 질문이네요! 어떤 부분이 가장 궁금하세요?'
-            ];
-            
-            return responses[Math.floor(Math.random() * responses.length)];
-        }
-
-        async function getLocalResponse(message) {
-            // 이 함수는 이제 getLocalBeeResponse로 대체됨
-            return getLocalBeeResponse(message);
-        }} catch (error) {
-                console.error('Google Search Error:', error);
-                return `검색 중 오류가 발생했습니다. 네트워크 연결을 확인해주세요. 🌐`;
-            }
-        }
-
-        async function getLocalResponse(message) {
-            const lowerMessage = message.toLowerCase();
-            
-            // 부부/데이트 관련 질문
-            if (lowerMessage.includes('데이트') || lowerMessage.includes('연인') || lowerMessage.includes('부부')) {
-                const dateIdeas = [
-                    '🍝 새로운 레스토랑에서 저녁 데이트',
-                    '🎬 영화관에서 로맨틱 영화 보기',
-                    '🚶‍♀️ 한강공원에서 산책하며 대화하기',
-                    '🏠 집에서 함께 요리해서 먹기',
-                    '☕ 예쁜 카페에서 차 마시며 수다떨기',
-                    '🎨 커플 도자기 만들기 체험',
-                    '🌅 일출/일몰 보러 가기',
-                    '🛍️ 쇼핑몰에서 함께 쇼핑하기',
-                    '🎮 PC방에서 게임 데이트',
-                    '🧘‍♀️ 커플 요가 클래스 참여'
-                ];
-                const randomIdea = dateIdeas[Math.floor(Math.random() * dateIdeas.length)];
-                return `💕 부부 데이트 아이디어를 추천드려요!\n\n"${randomIdea}"\n\n어떠세요? 즐거운 시간 보내세요! 😊`;
-            }
-            
-            // 날씨 관련 (실제 API 호출)
-            if (lowerMessage.includes('날씨')) {
-                try {
-                    const searchResult = await searchGoogle('오늘 날씨 서울');
-                    return searchResult;
-                } catch (error) {
-                    return '날씨 정보를 가져오는 중 오류가 발생했습니다. 날씨 앱을 확인해주세요! ☔';
-                }
-            }
-            
-            // 뉴스 관련 (실제 API 호출)
-            if (lowerMessage.includes('뉴스') || lowerMessage.includes('소식')) {
-                try {
-                    const searchResult = await searchGoogle('오늘 뉴스 헤드라인');
-                    return searchResult;
-                } catch (error) {
-                    return '뉴스 정보를 가져오는 중 오류가 발생했습니다. 뉴스 앱을 확인해주세요! 📰';
-                }
-            }
-            
-            // 요리/음식 관련
-            if (lowerMessage.includes('요리') || lowerMessage.includes('음식') || lowerMessage.includes('레시피')) {
-                try {
-                    const searchResult = await searchGoogle('간단한 요리 레시피 부부');
-                    return searchResult;
-                } catch (error) {
-                    return '🍳 간단한 요리 추천:\n\n• 김치볶음밥\n• 라면에 계란 토핑\n• 간단한 파스타\n• 샌드위치\n• 계란말이\n\n함께 만들어보세요! 😊';
-                }
-            }
-            
-            // 건강 관련
-            if (lowerMessage.includes('운동') || lowerMessage.includes('건강') || lowerMessage.includes('다이어트')) {
-                const healthTips = [
-                    '🚶‍♀️ 매일 30분 함께 산책하기',
-                    '💧 하루 2L 물 마시기',
-                    '🧘‍♀️ 10분 스트레칭 루틴',
-                    '🏃‍♂️ 주 3회 30분 조깅',
-                    '💪 홈트레이닝 영상 따라하기',
-                    '🥗 건강한 식단 계획하기',
-                    '😴 충분한 수면 취하기 (7-8시간)',
-                    '📱 스마트폰 사용 줄이기'
-                ];
-                const randomTip = healthTips[Math.floor(Math.random() * healthTips.length)];
-                return `💪 건강한 생활 습관 추천:\n\n"${randomTip}"\n\n함께 건강해져요! 화이팅! 🔥`;
-            }
-            
-            // 인사
-            if (lowerMessage.includes('안녕') || lowerMessage.includes('하이') || lowerMessage.includes('헬로')) {
-                const greetings = [
-                    '안녕하세요! 👋 오늘도 좋은 하루 보내세요!',
-                    '반가워요! 😊 무엇을 도와드릴까요?',
-                    '안녕하세요! 🌟 오늘은 어떤 하루를 계획하고 계신가요?',
-                    '하이! 👋 함께 productive한 하루 만들어봐요!'
-                ];
-                return greetings[Math.floor(Math.random() * greetings.length)];
-            }
-            
-            // 감사 인사
-            if (lowerMessage.includes('고마워') || lowerMessage.includes('감사')) {
-                return '천만에요! 😊 언제든지 도움이 필요하시면 말씀해주세요! 부부가 함께 행복한 하루 보내세요! 💕';
-            }
-            
-            // 시간 관련
-            if (lowerMessage.includes('시간') || lowerMessage.includes('몇시')) {
-                const now = new Date();
-                const timeStr = now.toLocaleString('ko-KR', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long', 
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-                return `⏰ 현재 시간: ${timeStr}\n\n시간이 참 빠르네요! 소중한 시간 잘 보내세요! ✨`;
-            }
-            
-            // 일반적인 검색 질문이면 Google 검색 실행
-            if (lowerMessage.includes('?') || lowerMessage.includes('알려줘') || lowerMessage.includes('찾아줘')) {
-                try {
-                    const searchResult = await searchGoogle(message);
-                    return searchResult;
-                } catch (error) {
-                    return '검색 중 오류가 발생했습니다. 다시 시도해주세요! 🔍';
-                }
-            }
-            
-            // 기본 응답
-            const responses = [
-                '흥미로운 질문이네요! 🤔 더 자세히 설명해주실 수 있을까요?',
-                '그것에 대해 검색해보시겠어요? 구체적인 키워드를 알려주세요! 🔍',
-                '좋은 질문입니다! 😊 어떤 정보가 가장 필요하신지 알려주세요.',
-                '할일 관리나 일상 정보 검색을 도와드릴 수 있어요! ✅ 무엇이 궁금하신가요?'
-            ];
-            
-            return responses[Math.floor(Math.random() * responses.length)];
-        }
-
-        // 키보드 단축키
-        document.addEventListener('keydown', function(e) {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                if (document.activeElement.id === 'todoInput') {
-                    addTodo();
-                }
-            }
-            
-            if (e.key === 'Escape') {
-                document.querySelectorAll('.modal.show').forEach(modal => {
-                    modal.classList.remove('show');
-                });
-                
-                if (window.innerWidth < 768) {
-                    closeChatbot();
-                }
-            }
-            
-            if ((e.ctrlKey || e.metaKey) && e.key === '/') {
-                e.preventDefault();
-                const chatbot = document.getElementById('chatbotContainer');
-                if (chatbot.classList.contains('open')) {
-                    closeChatbot();
-                } else {
-                    openChatbot();
-                }
-            }
-        });
-
-        // 초기화 실행
-        init();
-        
-        // 스마트폰에서는 챗봇을 닫힌 상태로 시작
-        if (window.innerWidth < 768) {
-            document.getElementById('chatbotContainer').classList.remove('open');
-        }
-
-        // PWA 설치 감지
-        let deferredPrompt;
-        
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            
-            // 설치 버튼 표시 (선택사항)
-            const installBtn = document.createElement('button');
-            installBtn.innerHTML = '📱 앱 설치';
-            installBtn.style.cssText = `
-                position: fixed;
-                top: 70px;
-                right: 20px;
-                background: var(--ios-blue);
-                color: white;
-                border: none;
-                border-radius: 20px;
-                padding: 8px 16px;
-                font-size: 14px;
-                cursor: pointer;
-                z-index: 999;
-            `;
-            
-            installBtn.onclick = async () => {
-                if (deferredPrompt) {
-                    deferredPrompt.prompt();
-                    const result = await deferredPrompt.userChoice;
-                    if (result.outcome === 'accepted') {
-                        installBtn.remove();
-                    }
-                    deferredPrompt = null;
-                }
-            };
-            
-            document.body.appendChild(installBtn);
-            
-            // 5초 후 자동 숨김
-            setTimeout(() => {
-                if (installBtn.parentNode) {
-                    installBtn.remove();
-                }
-            }, 5000);
-        });
-
-        // 서비스 워커 등록 (HTTPS 환경에서만)
-        if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then((registration) => {
-                        console.log('SW registered: ', registration);
-                    })
-                    .catch((registrationError) => {
-                        console.log('SW registration failed: ', registrationError);
-                    });
-            });
-        }
-    </script>
-</body>
-</html><!DOCTYPE html>
+            if (geminiApiKey &&<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>부부 할일관리 with AI</title>
+    <title>부부 할일관리 with 꿀벌</title>
     <link rel="manifest" href="manifest.json">
     <style>
         * {
@@ -1181,27 +1076,16 @@
             --ios-green: #34C759;
             --ios-red: #FF3B30;
             --ios-orange: #FF9500;
-            --ios-purple: #AF52DE;
-            --ios-pink: #FF2D92;
             --ios-yellow: #FFCC00;
-            --ios-teal: #5AC8FA;
-            
             --ios-gray-1: #F2F1F6;
             --ios-gray-2: #E5E5EA;
             --ios-gray-3: #D1D1D6;
             --ios-gray-4: #C7C7CC;
-            --ios-gray-5: #AEAEB2;
-            --ios-gray-6: #8E8E93;
-            
-            --ios-black: #000000;
-            --ios-dark-gray: #1C1C1E;
             --ios-text-primary: #000000;
             --ios-text-secondary: #3C3C43;
             --ios-text-tertiary: #8E8E93;
-            
             --ios-card-bg: rgba(255, 255, 255, 0.8);
             --ios-overlay: rgba(0, 0, 0, 0.4);
-            
             --ios-border-radius: 12px;
             --ios-corner-radius: 20px;
             --ios-blur: blur(20px);
@@ -1228,15 +1112,6 @@
         }
 
         .app-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 1fr;
-            min-height: 100vh;
-            position: relative;
-        }
-
-        .main-app {
             max-width: 428px;
             margin: 0 auto;
             width: 100%;
@@ -1312,7 +1187,7 @@
 
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
             gap: 12px;
         }
 
@@ -1430,10 +1305,6 @@
             align-items: center;
             justify-content: center;
             transition: all 0.2s ease;
-        }
-
-        .tab-close:hover {
-            background: rgba(0, 0, 0, 0.15);
         }
 
         .tab.active .tab-close {
@@ -2033,13 +1904,8 @@
             background: var(--ios-gray-3);
         }
 
-        /* 스마트폰 최적화 스타일 */
+        /* 스마트폰 최적화 */
         @media (max-width: 768px) {
-            .app-container {
-                display: block;
-                padding: 0;
-            }
-            
             .input-row {
                 flex-direction: column;
             }
@@ -2047,10 +1913,6 @@
             .todo-input, .priority-select, .add-btn {
                 width: 100%;
                 min-width: auto;
-            }
-            
-            .stats-grid {
-                grid-template-columns: 1fr 1fr 1fr;
             }
             
             .todo-actions {
@@ -2063,7 +1925,6 @@
                 padding: 4px 8px;
             }
             
-            /* 스와이프 제스처를 위한 터치 최적화 */
             .todo-item {
                 padding: 18px 20px;
                 touch-action: pan-y;
@@ -2116,3 +1977,53 @@
         }
 
         @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .slide-in {
+            animation: slideIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .haptic {
+            animation: hapticFeedback 0.1s ease;
+        }
+
+        @keyframes hapticFeedback {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(0.98); }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 메인 앱 -->
+        <div class="main-app">
+            <div class="status-bar">
+                <div class="time" id="currentTime">9:41</div>
+            </div>
+
+            <div class="header">
+                <h1>💑 할일</h1>
+                <p class="subtitle">🐝 꿀벌과 함께하는 스마트한 하루</p>
+                <button class="settings-btn" onclick="showApiModal()">⚙️ 꿀벌 설정</button>
+            </div>
+
+            <div class="stats-container">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalTasks">0</div>
+                        <div class="stat-label">총 할일</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="completedTasks">0</div>
+                        <div class="stat-label">완료</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="progressPercent
