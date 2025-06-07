@@ -104,20 +104,22 @@
         <!-- 챗봇 컨테이너 -->
         <div class="chatbot-container" id="chatbotContainer">
             <div class="chatbot-header">
-                <div class="chatbot-title">🤖 AI 어시스턴트</div>
+                <div class="chatbot-title">🐝 꿀벌</div>
                 <button class="close-chatbot" onclick="closeChatbot()">×</button>
             </div>
             
             <div class="chatbot-messages" id="chatMessages">
                 <div class="message bot">
-                    안녕하세요! 👋 저는 여러분의 AI 어시스턴트입니다. 
-                    할일 관리부터 실시간 정보 검색까지 도와드릴게요!
+                    안녕하세요! 저는 꿀벌이에요! 🐝✨
+                    부부 할일관리와 일상의 모든 질문에 답해드릴게요!
+                    
+                    저는 Google Gemini 1.5 Flash로 구동되는 똑똑한 AI랍니다!
                     
                     <div class="quick-actions" style="margin-top: 12px;">
                         <button class="quick-action-btn" onclick="sendQuickMessage('오늘 날씨 어때?')">🌤️ 날씨</button>
-                        <button class="quick-action-btn" onclick="sendQuickMessage('최신 뉴스 알려줘')">📰 뉴스</button>
-                        <button class="quick-action-btn" onclick="sendQuickMessage('할일 추천해줘')">✅ 할일추천</button>
-                        <button class="quick-action-btn" onclick="sendQuickMessage('부부 데이트 아이디어')">💑 데이트</button>
+                        <button class="quick-action-btn" onclick="sendQuickMessage('부부 데이트 추천해줘')">💑 데이트</button>
+                        <button class="quick-action-btn" onclick="sendQuickMessage('건강한 요리 레시피 알려줘')">🍳 요리</button>
+                        <button class="quick-action-btn" onclick="sendQuickMessage('할일 추천해줘')">✅ 할일</button>
                     </div>
                 </div>
             </div>
@@ -138,7 +140,7 @@
 
     <!-- 플로팅 챗봇 버튼 -->
     <button class="floating-chat-btn" onclick="openChatbot()">
-        🤖
+        🐝
     </button>
 
     <!-- 모달들 -->
@@ -177,11 +179,13 @@
     <div class="modal" id="apiModal">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title">Google API 설정</div>
-                <input type="text" class="modal-input" id="apiKeyInput" placeholder="Google Custom Search API 키">
-                <input type="text" class="modal-input" id="searchEngineInput" placeholder="검색 엔진 ID">
+                <div class="modal-title">🐝 꿀벌 AI 설정</div>
+                <input type="text" class="modal-input" id="apiKeyInput" placeholder="Google Gemini API 키">
                 <p style="font-size: 14px; color: var(--ios-text-secondary); margin-top: 8px;">
-                    Google Cloud Console에서 Custom Search JSON API 키와 검색 엔진 ID를 받아서 입력하세요.
+                    Google AI Studio에서 Gemini API 키를 받아서 입력하세요.<br>
+                    <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: var(--ios-blue);">
+                        🔗 API 키 받으러 가기
+                    </a>
                 </p>
             </div>
             <div class="modal-actions">
@@ -215,8 +219,7 @@
         let editingTodo = null;
         let currentFilter = 'all';
         let chatHistory = [];
-        let googleApiKey = 'AIzaSyACAoKxi4NsWm-zstIVpXLTh4apZmGz7Z0';
-        let searchEngineId = '017576662512468605876:omuauf_lfve'; // 데모용 검색 엔진 ID
+        let geminiApiKey = 'AIzaSyACAoKxi4NsWm-zstIVpXLTh4apZmGz7Z0'; // Gemini API 키
 
         // 시간 업데이트
         function updateTime() {
@@ -632,8 +635,7 @@
 
         // API 설정
         function showApiModal() {
-            document.getElementById('apiKeyInput').value = googleApiKey;
-            document.getElementById('searchEngineInput').value = searchEngineId;
+            document.getElementById('apiKeyInput').value = geminiApiKey;
             document.getElementById('apiModal').classList.add('show');
         }
 
@@ -642,16 +644,14 @@
         }
 
         function saveApiSettings() {
-            googleApiKey = document.getElementById('apiKeyInput').value.trim();
-            searchEngineId = document.getElementById('searchEngineInput').value.trim();
+            geminiApiKey = document.getElementById('apiKeyInput').value.trim();
             
-            localStorage.setItem('googleApiSettings', JSON.stringify({
-                apiKey: googleApiKey,
-                searchEngineId: searchEngineId
+            localStorage.setItem('geminiApiSettings', JSON.stringify({
+                apiKey: geminiApiKey
             }));
             
             closeApiModal();
-            addBotMessage('API 설정이 저장되었습니다! 🎉');
+            addBotMessage('🐝 꿀벌이 더 똑똑해졌어요! API 설정이 완료되었습니다! ✨');
         }
 
         // 챗봇 기능
@@ -741,14 +741,14 @@
         async function processMessage(message) {
             const lowerMessage = message.toLowerCase();
             
-            // 할일 관련 명령어
+            // 할일 관련 명령어 (로컬 처리)
             if (lowerMessage.includes('할일') && lowerMessage.includes('추가')) {
                 const todoText = message.replace(/할일|추가|해줘|해주세요/g, '').trim();
                 if (todoText) {
                     addQuickTodo(todoText);
-                    return `"${todoText}" 할일을 추가했습니다! ✅`;
+                    return `🐝 "${todoText}" 할일을 꿀벌이 추가했어요! ✅`;
                 }
-                return '어떤 할일을 추가하시겠어요?';
+                return '🐝 어떤 할일을 추가하시겠어요? 꿀벌이 도와드릴게요!';
             }
             
             if (lowerMessage.includes('할일') && (lowerMessage.includes('목록') || lowerMessage.includes('리스트'))) {
@@ -756,77 +756,193 @@
                 const pendingTodos = currentTodos.filter(t => !t.completed);
                 
                 if (pendingTodos.length === 0) {
-                    return `${currentTab}에 미완료 할일이 없습니다! 🎉`;
+                    return `🐝 ${currentTab}에 미완료 할일이 없어요! 대단해요! 🎉`;
                 }
                 
                 const todoList = pendingTodos.map((t, i) => `${i + 1}. ${t.text}`).join('\n');
-                return `${currentTab}의 미완료 할일:\n\n${todoList}`;
+                return `🐝 ${currentTab}의 미완료 할일이에요:\n\n${todoList}\n\n꿀벌이 응원할게요! 화이팅! 💪`;
             }
             
-            if (lowerMessage.includes('할일') && lowerMessage.includes('추천')) {
-                const suggestions = [
-                    '물 2L 마시기 💧',
-                    '30분 산책하기 🚶‍♀️',
-                    '친구에게 안부 묻기 📱',
-                    '책 30분 읽기 📚',
-                    '방 정리하기 🧹',
-                    '스트레칭 하기 🤸‍♀️',
-                    '요리 해보기 🍳',
-                    '일기 쓰기 ✍️'
-                ];
-                const randomSuggestion = suggestions[Math.floor(Math.random() * suggestions.length)];
-                return `오늘 이런 할일은 어떠세요?\n\n"${randomSuggestion}"\n\n추가하시겠어요?`;
-            }
-            
-            // 통계 정보
+            // 통계 정보 (로컬 처리)
             if (lowerMessage.includes('통계') || lowerMessage.includes('진행률')) {
                 const allTodos = Object.values(todos).flat();
                 const total = allTodos.length;
                 const completed = allTodos.filter(t => t.completed).length;
                 const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
                 
-                return `📊 할일 통계\n\n총 할일: ${total}개\n완료: ${completed}개\n진행률: ${progress}%\n\n${progress >= 80 ? '정말 잘하고 계시네요! 🎉' : progress >= 50 ? '절반 이상 완료! 화이팅! 💪' : '조금씩 해나가세요! 😊'}`;
+                return `🐝 꿀벌이 분석한 할일 통계예요!\n\n📊 총 할일: ${total}개\n✅ 완료: ${completed}개\n📈 진행률: ${progress}%\n\n${progress >= 80 ? '정말 훌륭해요! 꿀벌도 부러워해요! 🎉' : progress >= 50 ? '절반 이상 완료! 꿀벌이 응원해요! 🐝💪' : '조금씩 차근차근 해봐요! 꿀벌이 함께할게요! 😊'}`;
             }
             
-            // Google Search API 사용
-            if (googleApiKey && searchEngineId) {
+            // Gemini AI로 처리
+            if (geminiApiKey) {
                 try {
-                    const searchResult = await searchGoogle(message);
-                    return searchResult;
+                    const response = await callGeminiAI(message);
+                    return response;
                 } catch (error) {
-                    return await getLocalResponse(message);
+                    console.error('Gemini API Error:', error);
+                    return '🐝 죄송해요! 꿀벌이 잠시 생각이 멈췄어요. 다시 한 번 말씀해주세요! 😅';
                 }
             } else {
-                return await getLocalResponse(message);
+                return getLocalBeeResponse(message);
             }
         }
 
-        async function searchGoogle(query) {
-            try {
-                const url = `https://www.googleapis.com/customsearch/v1?key=${googleApiKey}&cx=${searchEngineId}&q=${encodeURIComponent(query)}&num=3`;
-                
-                const response = await fetch(url);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                
-                if (data.items && data.items.length > 0) {
-                    let result = `🔍 "${query}" 검색 결과:\n\n`;
-                    
-                    data.items.forEach((item, index) => {
-                        result += `${index + 1}. **${item.title}**\n`;
-                        result += `${item.snippet}\n`;
-                        if (index < data.items.length - 1) result += '\n';
-                    });
-                    
-                    return result;
-                } else {
-                    return `"${query}"에 대한 검색 결과를 찾을 수 없습니다. 다른 키워드로 시도해보세요! 🔍`;
-                }
-            } catch (error) {
+        async function callGeminiAI(message) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`;
+            
+            // 꿀벌 페르소나와 할일관리 컨텍스트 제공
+            const systemPrompt = `당신은 '꿀벌'이라는 이름의 AI 어시스턴트입니다. 🐝
+
+성격과 말투:
+- 친근하고 활기찬 꿀벌 캐릭터
+- 항상 "🐝"이나 꿀벌 관련 이모지 사용
+- 부부를 위한 따뜻하고 실용적인 조언 제공
+- 귀엽고 친근한 말투 (반말 사용)
+
+현재 사용자의 할일 현황:
+현재 탭: ${currentTab}
+총 할일: ${Object.values(todos).flat().length}개
+완료: ${Object.values(todos).flat().filter(t => t.completed).length}개
+
+응답 가이드라인:
+1. 항상 꿀벌 캐릭터로 응답
+2. 부부 관계와 일상에 도움되는 조언
+3. 실용적이고 구체적인 답변
+4. 300자 이내로 간결하게
+5. 이모지 적극 활용
+
+사용자 질문: ${message}`;
+
+            const requestBody = {
+                contents: [
+                    {
+                        parts: [
+                            {
+                                text: systemPrompt
+                            }
+                        ]
+                    }
+                ]
+            };
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                return data.candidates[0].content.parts[0].text;
+            } else {
+                throw new Error('Invalid response format');
+            }
+        }
+
+        function getLocalBeeResponse(message) {
+            const lowerMessage = message.toLowerCase();
+            
+            // 부부/데이트 관련
+            if (lowerMessage.includes('데이트') || lowerMessage.includes('연인') || lowerMessage.includes('부부')) {
+                const dateIdeas = [
+                    '🍝 새로운 레스토랑에서 꿀같은 저녁 데이트',
+                    '🎬 달콤한 로맨틱 영화 보기',
+                    '🚶‍♀️ 꽃밭 산책하며 꿀벌처럼 대화하기',
+                    '🏠 집에서 꿀같이 달콤한 요리하기',
+                    '☕ 예쁜 카페에서 꿀차 마시며 수다떨기',
+                    '🎨 커플 도자기 만들기 (꿀단지 만들기!)',
+                    '🌅 일출 보며 꿀벌 활동시간 맞추기',
+                    '🛍️ 함께 꿀같은 쇼핑 데이트',
+                    '🎮 게임으로 달콤한 경쟁하기',
+                    '🧘‍♀️ 꿀벌처럼 유연한 요가하기'
+                ];
+                const randomIdea = dateIdeas[Math.floor(Math.random() * dateIdeas.length)];
+                return `🐝 꿀벌이 추천하는 달콤한 데이트!\n\n"${randomIdea}"\n\n꿀같이 달콤한 시간 보내세요! 윙윙~ 💕`;
+            }
+            
+            // 건강/운동 관련
+            if (lowerMessage.includes('운동') || lowerMessage.includes('건강')) {
+                const healthTips = [
+                    '🚶‍♀️ 꿀벌처럼 부지런히 매일 산책하기',
+                    '💧 꿀벌이 물을 좋아하듯 하루 2L 마시기',
+                    '🧘‍♀️ 꿀벌 날개짓 스트레칭 10분',
+                    '🏃‍♂️ 꿀벌만큼 활기차게 조깅하기',
+                    '💪 꿀벌 근력운동으로 튼튼하게',
+                    '🥗 꿀벌 식단처럼 자연식품 먹기',
+                    '😴 꿀벌의 규칙적인 생활패턴 따라하기',
+                    '📱 스마트폰보다 자연과 가까이하기'
+                ];
+                const randomTip = healthTips[Math.floor(Math.random() * healthTips.length)];
+                return `🐝 꿀벌의 건강 비법!\n\n"${randomTip}"\n\n꿀벌처럼 건강하게 살아봐요! 윙윙~ 💪`;
+            }
+            
+            // 요리 관련
+            if (lowerMessage.includes('요리') || lowerMessage.includes('음식') || lowerMessage.includes('레시피')) {
+                const recipes = [
+                    '🍯 꿀 버터 토스트 (꿀벌 특제!)',
+                    '🥗 꿀 드레싱 샐러드',
+                    '🍳 꿀 간장 계란찜',
+                    '🧈 꿀 마늘 치킨',
+                    '🥞 꿀 팬케이크',
+                    '🍵 꿀 생강차',
+                    '🍖 꿀 불고기',
+                    '🥛 꿀 바나나 스무디'
+                ];
+                const randomRecipe = recipes[Math.floor(Math.random() * recipes.length)];
+                return `🐝 꿀벌의 달콤한 요리 추천!\n\n"${randomRecipe}"\n\n꿀벌이 보장하는 달콤한 맛! 함께 만들어봐요! 🍯✨`;
+            }
+            
+            // 인사
+            if (lowerMessage.includes('안녕') || lowerMessage.includes('하이') || lowerMessage.includes('헬로')) {
+                const greetings = [
+                    '🐝 안녕하세요! 꿀벌이에요! 윙윙~',
+                    '🐝 반가워요! 오늘도 달콤한 하루 만들어요!',
+                    '🐝 하이! 꿀벌이 날아왔어요! ✨',
+                    '🐝 윙윙~ 꿀벌이 인사드려요!'
+                ];
+                return greetings[Math.floor(Math.random() * greetings.length)];
+            }
+            
+            // 감사 인사
+            if (lowerMessage.includes('고마워') || lowerMessage.includes('감사')) {
+                return '🐝 천만에요! 꿀벌은 언제나 달콤한 도움을 드리고 싶어요! 부부가 꿀같이 달콤한 하루 보내세요! 💕';
+            }
+            
+            // 시간 관련
+            if (lowerMessage.includes('시간') || lowerMessage.includes('몇시')) {
+                const now = new Date();
+                const timeStr = now.toLocaleString('ko-KR', {
+                    weekday: 'long',
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                return `🐝 꿀벌 시계로는 지금 ${timeStr}이에요!\n\n꿀벌도 시간이 참 빠르다고 생각해요! 달콤한 시간 잘 보내세요! ✨`;
+            }
+            
+            // 기본 응답
+            const responses = [
+                '🐝 흥미로운 질문이네요! 꿀벌이 더 자세히 알고 싶어요!',
+                '🐝 그것에 대해 꿀벌이 열심히 생각해볼게요! 조금 더 설명해주세요!',
+                '🐝 좋은 질문이에요! 꿀벌이 도움될 만한 정보를 찾아볼게요!',
+                '🐝 꿀벌도 궁금해지는 질문이네요! 어떤 부분이 가장 궁금하세요?'
+            ];
+            
+            return responses[Math.floor(Math.random() * responses.length)];
+        }
+
+        async function getLocalResponse(message) {
+            // 이 함수는 이제 getLocalBeeResponse로 대체됨
+            return getLocalBeeResponse(message);
+        }} catch (error) {
                 console.error('Google Search Error:', error);
                 return `검색 중 오류가 발생했습니다. 네트워크 연결을 확인해주세요. 🌐`;
             }
