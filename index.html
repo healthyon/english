@@ -1,256 +1,2002 @@
-<!DOCTYPE html>
+@keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .slide-in {
+            animation: slideIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .haptic {
+            animation: hapticFeedback 0.1s ease;
+        }
+
+        @keyframes hapticFeedback {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(0.98); }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 메인 앱 -->
+        <div class="main-app">
+            <div class="status-bar">
+                <div class="time" id="currentTime">9:41</div>
+            </div>
+
+            <div class="header">
+                <h1>💑 할일</h1>
+                <p class="subtitle">AI와 함께하는 스마트한 하루</p>
+                <button class="settings-btn" onclick="showApiModal()">⚙️ API 설정</button>
+            </div>
+
+            <div class="stats-container">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalTasks">0</div>
+                        <div class="stat-label">총 할일</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="completedTasks">0</div>
+                        <div class="stat-label">완료</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="progressPercent">0%</div>
+                        <div class="stat-label">진행률</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <div class="section">
+                    <div class="section-title">카테고리</div>
+                    <div class="tabs-container">
+                        <div class="tab-list" id="tabList"></div>
+                        <button class="add-tab-btn" onclick="showAddTabModal()">+ 새 카테고리</button>
+                        
+                        <div class="filter-container">
+                            <button class="filter-btn active" onclick="filterTodos('all')">전체</button>
+                            <button class="filter-btn" onclick="filterTodos('pending')">진행중</button>
+                            <button class="filter-btn" onclick="filterTodos('completed')">완료</button>
+                            <button class="filter-btn" onclick="filterTodos('high')">🔴 중요</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">새 할일</div>
+                    <div class="input-container">
+                        <div class="input-row">
+                            <input type="text" class="todo-input" id="todoInput" placeholder="할일을 입력하세요">
+                            <button class="add-btn" onclick="addTodo()">추가</button>
+                        </div>
+                        <select class="priority-select" id="prioritySelect">
+                            <option value="low">🟢 낮은 우선순위</option>
+                            <option value="medium" selected>🟡 보통 우선순위</option>
+                            <option value="high">🔴 높은 우선순위</option>
+                        </select>
+                        
+                        <div class="quick-actions">
+                            <button class="quick-action-btn" onclick="addQuickTodo('쇼핑하기')">🛒 쇼핑</button>
+                            <button class="quick-action-btn" onclick="addQuickTodo('운동하기')">🏃‍♀️ 운동</button>
+                            <button class="quick-action-btn" onclick="addQuickTodo('청소하기')">🧹 청소</button>
+                            <button class="quick-action-btn" onclick="addQuickTodo('요리하기')">🍳 요리</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title" id="listTitle">모든 할일</div>
+                    <div class="todo-list-container">
+                        <div id="todoList"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 챗봇 컨테이너 -->
+        <div class="chatbot-container" id="chatbotContainer">
+            <div class="chatbot-header">
+                <div class="chatbot-title">🤖 AI 어시스턴트</div>
+                <button class="close-chatbot" onclick="closeChatbot()">×</button>
+            </div>
+            
+            <div class="chatbot-messages" id="chatMessages">
+                <div class="message bot">
+                    안녕하세요! 👋 저는 여러분의 AI 어시스턴트입니다. 
+                    할일 관리부터 실시간 정보 검색까지 도와드릴게요!
+                    
+                    <div class="quick-actions" style="margin-top: 12px;">
+                        <button class="quick-action-btn" onclick="sendQuickMessage('오늘 날씨 어때?')">🌤️ 날씨</button>
+                        <button class="quick-action-btn" onclick="sendQuickMessage('최신 뉴스 알려줘')">📰 뉴스</button>
+                        <button class="quick-action-btn" onclick="sendQuickMessage('할일 추천해줘')">✅ 할일추천</button>
+                        <button class="quick-action-btn" onclick="sendQuickMessage('부부 데이트 아이디어')">💑 데이트</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chatbot-input-container">
+                <div class="chatbot-input-row">
+                    <textarea class="chatbot-input" id="chatInput" placeholder="궁금한 것을 물어보세요..." rows="1"></textarea>
+                    <button class="chatbot-send" id="chatSend" onclick="sendMessage()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="m22 2-7 20-4-9-9-4z"/>
+                            <path d="M22 2 11 13"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 플로팅 챗봇 버튼 -->
+    <button class="floating-chat-btn" onclick="openChatbot()">
+        🤖
+    </button>
+
+    <!-- 모달들 -->
+    <div class="modal" id="tabModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">새 카테고리</div>
+                <input type="text" class="modal-input" id="tabNameInput" placeholder="카테고리 이름">
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn secondary" onclick="closeModal()">취소</button>
+                <button class="modal-btn primary" onclick="confirmTabAction()">추가</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">할일 수정</div>
+                <input type="text" class="modal-input" id="editInput" placeholder="할일 내용">
+                <select class="priority-select" id="editPrioritySelect" style="margin-bottom: 20px; width: 100%;">
+                    <option value="low">🟢 낮은 우선순위</option>
+                    <option value="medium">🟡 보통 우선순위</option>
+                    <option value="high">🔴 높은 우선순위</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn secondary" onclick="closeEditModal()">취소</button>
+                <button class="modal-btn primary" onclick="confirmEditTodo()">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- API 키 설정 모달 -->
+    <div class="modal" id="apiModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Google API 설정</div>
+                <input type="text" class="modal-input" id="apiKeyInput" placeholder="Google Custom Search API 키">
+                <input type="text" class="modal-input" id="searchEngineInput" placeholder="검색 엔진 ID">
+                <p style="font-size: 14px; color: var(--ios-text-secondary); margin-top: 8px;">
+                    Google Cloud Console에서 Custom Search JSON API 키와 검색 엔진 ID를 받아서 입력하세요.
+                </p>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn secondary" onclick="closeApiModal()">취소</button>
+                <button class="modal-btn primary" onclick="saveApiSettings()">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 전역 변수
+        let tabs = ['💼 업무', '🏠 집안일', '🛒 쇼핑', '💑 데이트'];
+        let currentTab = '💼 업무';
+        let todos = {
+            '💼 업무': [
+                { id: 1, text: '회의 준비하기', completed: false, priority: 'high', createdAt: Date.now() },
+                { id: 2, text: '이메일 확인', completed: true, priority: 'medium', createdAt: Date.now() }
+            ],
+            '🏠 집안일': [
+                { id: 3, text: '설거지하기', completed: false, priority: 'medium', createdAt: Date.now() },
+                { id: 4, text: '빨래 널기', completed: true, priority: 'low', createdAt: Date.now() }
+            ],
+            '🛒 쇼핑': [
+                { id: 5, text: '우유와 달걀 사기', completed: false, priority: 'high', createdAt: Date.now() }
+            ],
+            '💑 데이트': []
+        };
+        let nextId = 6;
+        let modalMode = 'add';
+        let editingTab = null;
+        let editingTodo = null;
+        let currentFilter = 'all';
+        let chatHistory = [];
+        let googleApiKey = 'AIzaSyACAoKxi4NsWm-zstIVpXLTh4apZmGz7Z0';
+        let searchEngineId = '017576662512468605876:omuauf_lfve'; // 데모용 검색 엔진 ID
+
+        // 시간 업데이트
+        function updateTime() {
+            const now = new Date();
+            const time = now.toLocaleTimeString('ko-KR', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+            document.getElementById('currentTime').textContent = time;
+        }
+
+        // 햅틱 피드백
+        function hapticFeedback(element) {
+            if (element) {
+                element.classList.add('haptic');
+                setTimeout(() => element.classList.remove('haptic'), 100);
+            }
+        }
+
+        // 초기화
+        function init() {
+            loadData();
+            updateTime();
+            setInterval(updateTime, 1000);
+            renderTabs();
+            renderTodos();
+            updateStats();
+            setupEventListeners();
+            setupChatInput();
+        }
+
+        // 이벤트 리스너 설정
+        function setupEventListeners() {
+            document.getElementById('todoInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    addTodo();
+                }
+            });
+
+            document.getElementById('tabNameInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    confirmTabAction();
+                }
+            });
+
+            document.getElementById('editInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    confirmEditTodo();
+                }
+            });
+
+            ['tabModal', 'editModal', 'apiModal'].forEach(modalId => {
+                document.getElementById(modalId).addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.classList.remove('show');
+                    }
+                });
+            });
+        }
+
+        // 챗 입력 설정
+        function setupChatInput() {
+            const chatInput = document.getElementById('chatInput');
+            const chatSend = document.getElementById('chatSend');
+
+            chatInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+                
+                chatSend.disabled = !this.value.trim();
+            });
+
+            chatInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        }
+
+        // 데이터 관리
+        function loadData() {
+            const saved = localStorage.getItem('iosTodoApp');
+            if (saved) {
+                const data = JSON.parse(saved);
+                tabs = data.tabs || tabs;
+                currentTab = data.currentTab || tabs[0];
+                todos = data.todos || todos;
+                nextId = data.nextId || nextId;
+                chatHistory = data.chatHistory || [];
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('iosTodoApp', JSON.stringify({
+                tabs, currentTab, todos, nextId, chatHistory
+            }));
+        }
+
+        // 통계 업데이트
+        function updateStats() {
+            const allTodos = Object.values(todos).flat();
+            const total = allTodos.length;
+            const completed = allTodos.filter(t => t.completed).length;
+            const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+            
+            document.getElementById('totalTasks').textContent = total;
+            document.getElementById('completedTasks').textContent = completed;
+            document.getElementById('progressPercent').textContent = progress + '%';
+        }
+
+        // 탭 렌더링
+        function renderTabs() {
+            const tabList = document.getElementById('tabList');
+            tabList.innerHTML = '';
+            
+            tabs.forEach(tab => {
+                const tabElement = document.createElement('button');
+                tabElement.className = `tab ${tab === currentTab ? 'active' : ''}`;
+                
+                const count = (todos[tab] || []).filter(t => !t.completed).length;
+                
+                tabElement.innerHTML = `
+                    ${tab}
+                    ${count > 0 ? `<span class="tab-count">${count}</span>` : ''}
+                    ${tabs.length > 1 ? `<span class="tab-close" onclick="event.stopPropagation(); deleteTab('${tab}')">&times;</span>` : ''}
+                `;
+                
+                tabElement.onclick = () => {
+                    hapticFeedback(tabElement);
+                    switchTab(tab);
+                };
+                
+                tabElement.ondblclick = () => editTab(tab);
+                tabList.appendChild(tabElement);
+            });
+        }
+
+        // 탭 전환
+        function switchTab(tab) {
+            currentTab = tab;
+            renderTabs();
+            renderTodos();
+            updateStats();
+            saveData();
+            document.getElementById('listTitle').textContent = `${tab} 할일`;
+        }
+
+        // 할일 렌더링
+        function renderTodos() {
+            const todoList = document.getElementById('todoList');
+            const currentTodos = todos[currentTab] || [];
+            
+            let filteredTodos = currentTodos;
+            
+            if (currentFilter === 'pending') {
+                filteredTodos = currentTodos.filter(t => !t.completed);
+            } else if (currentFilter === 'completed') {
+                filteredTodos = currentTodos.filter(t => t.completed);
+            } else if (currentFilter === 'high') {
+                filteredTodos = currentTodos.filter(t => t.priority === 'high');
+            }
+            
+            if (filteredTodos.length === 0) {
+                todoList.innerHTML = `
+                    <div class="empty-state">
+                        <span class="emoji">📝</span>
+                        <h3>할일이 없습니다</h3>
+                        <p>새로운 할일을 추가해보세요!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            todoList.innerHTML = filteredTodos.map(todo => `
+                <div class="todo-item ${todo.completed ? 'completed' : ''} slide-in">
+                    <div class="todo-checkbox ${todo.completed ? 'checked' : ''}" 
+                         onclick="toggleTodo(${todo.id})"></div>
+                    <div class="todo-content">
+                        <div class="todo-text">${todo.text}</div>
+                        <div class="todo-meta">
+                            <span class="priority-badge priority-${todo.priority}"></span>
+                            <span>${formatTime(todo.createdAt)}</span>
+                        </div>
+                    </div>
+                    <div class="todo-actions">
+                        <button class="action-btn edit" onclick="editTodo(${todo.id})">수정</button>
+                        <button class="action-btn delete" onclick="deleteTodo(${todo.id})">삭제</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 시간 포맷팅
+        function formatTime(timestamp) {
+            const now = new Date();
+            const date = new Date(timestamp);
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / (1000 * 60));
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            
+            if (diffMins < 1) return '방금 전';
+            if (diffMins < 60) return `${diffMins}분 전`;
+            if (diffHours < 24) return `${diffHours}시간 전`;
+            if (diffDays < 7) return `${diffDays}일 전`;
+            
+            return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+        }
+
+        // 할일 관리 함수들
+        function addTodo() {
+            const input = document.getElementById('todoInput');
+            const priority = document.getElementById('prioritySelect').value;
+            const text = input.value.trim();
+            
+            if (!text) return;
+            
+            if (!todos[currentTab]) todos[currentTab] = [];
+            
+            todos[currentTab].push({
+                id: nextId++,
+                text: text,
+                completed: false,
+                priority: priority,
+                createdAt: Date.now()
+            });
+            
+            input.value = '';
+            hapticFeedback(document.querySelector('.add-btn'));
+            renderTabs();
+            renderTodos();
+            updateStats();
+            saveData();
+        }
+
+        function addQuickTodo(text) {
+            if (!todos[currentTab]) todos[currentTab] = [];
+            
+            todos[currentTab].push({
+                id: nextId++,
+                text: text,
+                completed: false,
+                priority: 'medium',
+                createdAt: Date.now()
+            });
+            
+            hapticFeedback(event.target);
+            renderTabs();
+            renderTodos();
+            updateStats();
+            saveData();
+        }
+
+        function toggleTodo(id) {
+            const currentTodos = todos[currentTab];
+            const todo = currentTodos.find(t => t.id === id);
+            
+            if (todo) {
+                todo.completed = !todo.completed;
+                hapticFeedback(document.querySelector(`[onclick="toggleTodo(${id})"]`));
+                renderTabs();
+                renderTodos();
+                updateStats();
+                saveData();
+            }
+        }
+
+        function editTodo(id) {
+            const todo = todos[currentTab].find(t => t.id === id);
+            if (!todo) return;
+            
+            editingTodo = id;
+            document.getElementById('editInput').value = todo.text;
+            document.getElementById('editPrioritySelect').value = todo.priority;
+            document.getElementById('editModal').classList.add('show');
+            
+            setTimeout(() => {
+                document.getElementById('editInput').focus();
+            }, 300);
+        }
+
+        function confirmEditTodo() {
+            const text = document.getElementById('editInput').value.trim();
+            const priority = document.getElementById('editPrioritySelect').value;
+            
+            if (!text) return;
+            
+            const todo = todos[currentTab].find(t => t.id === editingTodo);
+            if (todo) {
+                todo.text = text;
+                todo.priority = priority;
+                closeEditModal();
+                renderTodos();
+                saveData();
+            }
+        }
+
+        function deleteTodo(id) {
+            todos[currentTab] = todos[currentTab].filter(t => t.id !== id);
+            renderTabs();
+            renderTodos();
+            updateStats();
+            saveData();
+        }
+
+        function filterTodos(filter) {
+            currentFilter = filter;
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            hapticFeedback(event.target);
+            renderTodos();
+        }
+
+        // 탭 관리
+        function showAddTabModal() {
+            modalMode = 'add';
+            document.getElementById('modalTitle').textContent = '새 카테고리';
+            document.getElementById('tabNameInput').value = '';
+            document.getElementById('tabModal').classList.add('show');
+            
+            setTimeout(() => {
+                document.getElementById('tabNameInput').focus();
+            }, 300);
+        }
+
+        function editTab(tab) {
+            modalMode = 'edit';
+            editingTab = tab;
+            document.getElementById('modalTitle').textContent = '카테고리 수정';
+            document.getElementById('tabNameInput').value = tab;
+            document.getElementById('tabModal').classList.add('show');
+            
+            setTimeout(() => {
+                document.getElementById('tabNameInput').focus();
+            }, 300);
+        }
+
+        function deleteTab(tab) {
+            if (tabs.length <= 1) {
+                alert('최소 하나의 카테고리는 있어야 합니다.');
+                return;
+            }
+            
+            if (confirm(`'${tab}' 카테고리를 삭제하시겠습니까?`)) {
+                tabs = tabs.filter(t => t !== tab);
+                delete todos[tab];
+                
+                if (currentTab === tab) {
+                    currentTab = tabs[0];
+                }
+                
+                renderTabs();
+                renderTodos();
+                updateStats();
+                saveData();
+            }
+        }
+
+        function confirmTabAction() {
+            const name = document.getElementById('tabNameInput').value.trim();
+            
+            if (!name) {
+                alert('카테고리 이름을 입력해주세요.');
+                return;
+            }
+            
+            if (modalMode === 'add') {
+                if (tabs.includes(name)) {
+                    alert('이미 존재하는 카테고리 이름입니다.');
+                    return;
+                }
+                
+                tabs.push(name);
+                todos[name] = [];
+                currentTab = name;
+            } else if (modalMode === 'edit') {
+                if (tabs.includes(name) && name !== editingTab) {
+                    alert('이미 존재하는 카테고리 이름입니다.');
+                    return;
+                }
+                
+                const index = tabs.indexOf(editingTab);
+                tabs[index] = name;
+                todos[name] = todos[editingTab];
+                delete todos[editingTab];
+                
+                if (currentTab === editingTab) {
+                    currentTab = name;
+                }
+            }
+            
+            closeModal();
+            renderTabs();
+            renderTodos();
+            updateStats();
+            saveData();
+        }
+
+        function closeModal() {
+            document.getElementById('tabModal').classList.remove('show');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('show');
+        }
+
+        // API 설정
+        function showApiModal() {
+            document.getElementById('apiKeyInput').value = googleApiKey;
+            document.getElementById('searchEngineInput').value = searchEngineId;
+            document.getElementById('apiModal').classList.add('show');
+        }
+
+        function closeApiModal() {
+            document.getElementById('apiModal').classList.remove('show');
+        }
+
+        function saveApiSettings() {
+            googleApiKey = document.getElementById('apiKeyInput').value.trim();
+            searchEngineId = document.getElementById('searchEngineInput').value.trim();
+            
+            localStorage.setItem('googleApiSettings', JSON.stringify({
+                apiKey: googleApiKey,
+                searchEngineId: searchEngineId
+            }));
+            
+            closeApiModal();
+            addBotMessage('API 설정이 저장되었습니다! 🎉');
+        }
+
+        // 챗봇 기능
+        function openChatbot() {
+            document.getElementById('chatbotContainer').classList.add('open');
+            document.getElementById('chatInput').focus();
+        }
+
+        function closeChatbot() {
+            document.getElementById('chatbotContainer').classList.remove('open');
+        }
+
+        function addBotMessage(text) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message bot';
+            messageDiv.textContent = text;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            chatHistory.push({ type: 'bot', text: text, timestamp: Date.now() });
+            saveData();
+        }
+
+        function addUserMessage(text) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message user';
+            messageDiv.textContent = text;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            chatHistory.push({ type: 'user', text: text, timestamp: Date.now() });
+            saveData();
+        }
+
+        function showTypingIndicator() {
+            const messagesContainer = document.getElementById('chatMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message loading';
+            typingDiv.id = 'typingIndicator';
+            typingDiv.innerHTML = `
+                <div class="typing-indicator">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            `;
+            messagesContainer.appendChild(typingDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            const typingIndicator = document.getElementById('typingIndicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            
+            if (!text) return;
+            
+            addUserMessage(text);
+            input.value = '';
+            input.style.height = 'auto';
+            
+            showTypingIndicator();
+            
+            try {
+                const response = await processMessage(text);
+                hideTypingIndicator();
+                addBotMessage(response);
+            } catch (error) {
+                hideTypingIndicator();
+                addBotMessage('죄송합니다. 오류가 발생했습니다. 다시 시도해주세요.');
+            }
+        }
+
+        function sendQuickMessage(text) {
+            document.getElementById('chatInput').value = text;
+            sendMessage();
+        }
+
+        async function processMessage(message) {
+            const lowerMessage = message.toLowerCase();
+            
+            // 할일 관련 명령어
+            if (lowerMessage.includes('할일') && lowerMessage.includes('추가')) {
+                const todoText = message.replace(/할일|추가|해줘|해주세요/g, '').trim();
+                if (todoText) {
+                    addQuickTodo(todoText);
+                    return `"${todoText}" 할일을 추가했습니다! ✅`;
+                }
+                return '어떤 할일을 추가하시겠어요?';
+            }
+            
+            if (lowerMessage.includes('할일') && (lowerMessage.includes('목록') || lowerMessage.includes('리스트'))) {
+                const currentTodos = todos[currentTab] || [];
+                const pendingTodos = currentTodos.filter(t => !t.completed);
+                
+                if (pendingTodos.length === 0) {
+                    return `${currentTab}에 미완료 할일이 없습니다! 🎉`;
+                }
+                
+                const todoList = pendingTodos.map((t, i) => `${i + 1}. ${t.text}`).join('\n');
+                return `${currentTab}의 미완료 할일:\n\n${todoList}`;
+            }
+            
+            if (lowerMessage.includes('할일') && lowerMessage.includes('추천')) {
+                const suggestions = [
+                    '물 2L 마시기 💧',
+                    '30분 산책하기 🚶‍♀️',
+                    '친구에게 안부 묻기 📱',
+                    '책 30분 읽기 📚',
+                    '방 정리하기 🧹',
+                    '스트레칭 하기 🤸‍♀️',
+                    '요리 해보기 🍳',
+                    '일기 쓰기 ✍️'
+                ];
+                const randomSuggestion = suggestions[Math.floor(Math.random() * suggestions.length)];
+                return `오늘 이런 할일은 어떠세요?\n\n"${randomSuggestion}"\n\n추가하시겠어요?`;
+            }
+            
+            // 통계 정보
+            if (lowerMessage.includes('통계') || lowerMessage.includes('진행률')) {
+                const allTodos = Object.values(todos).flat();
+                const total = allTodos.length;
+                const completed = allTodos.filter(t => t.completed).length;
+                const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+                
+                return `📊 할일 통계\n\n총 할일: ${total}개\n완료: ${completed}개\n진행률: ${progress}%\n\n${progress >= 80 ? '정말 잘하고 계시네요! 🎉' : progress >= 50 ? '절반 이상 완료! 화이팅! 💪' : '조금씩 해나가세요! 😊'}`;
+            }
+            
+            // Google Search API 사용
+            if (googleApiKey && searchEngineId) {
+                try {
+                    const searchResult = await searchGoogle(message);
+                    return searchResult;
+                } catch (error) {
+                    return await getLocalResponse(message);
+                }
+            } else {
+                return await getLocalResponse(message);
+            }
+        }
+
+        async function searchGoogle(query) {
+            try {
+                const url = `https://www.googleapis.com/customsearch/v1?key=${googleApiKey}&cx=${searchEngineId}&q=${encodeURIComponent(query)}&num=3`;
+                
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.items && data.items.length > 0) {
+                    let result = `🔍 "${query}" 검색 결과:\n\n`;
+                    
+                    data.items.forEach((item, index) => {
+                        result += `${index + 1}. **${item.title}**\n`;
+                        result += `${item.snippet}\n`;
+                        if (index < data.items.length - 1) result += '\n';
+                    });
+                    
+                    return result;
+                } else {
+                    return `"${query}"에 대한 검색 결과를 찾을 수 없습니다. 다른 키워드로 시도해보세요! 🔍`;
+                }
+            } catch (error) {
+                console.error('Google Search Error:', error);
+                return `검색 중 오류가 발생했습니다. 네트워크 연결을 확인해주세요. 🌐`;
+            }
+        }
+
+        async function getLocalResponse(message) {
+            const lowerMessage = message.toLowerCase();
+            
+            // 부부/데이트 관련 질문
+            if (lowerMessage.includes('데이트') || lowerMessage.includes('연인') || lowerMessage.includes('부부')) {
+                const dateIdeas = [
+                    '🍝 새로운 레스토랑에서 저녁 데이트',
+                    '🎬 영화관에서 로맨틱 영화 보기',
+                    '🚶‍♀️ 한강공원에서 산책하며 대화하기',
+                    '🏠 집에서 함께 요리해서 먹기',
+                    '☕ 예쁜 카페에서 차 마시며 수다떨기',
+                    '🎨 커플 도자기 만들기 체험',
+                    '🌅 일출/일몰 보러 가기',
+                    '🛍️ 쇼핑몰에서 함께 쇼핑하기',
+                    '🎮 PC방에서 게임 데이트',
+                    '🧘‍♀️ 커플 요가 클래스 참여'
+                ];
+                const randomIdea = dateIdeas[Math.floor(Math.random() * dateIdeas.length)];
+                return `💕 부부 데이트 아이디어를 추천드려요!\n\n"${randomIdea}"\n\n어떠세요? 즐거운 시간 보내세요! 😊`;
+            }
+            
+            // 날씨 관련 (실제 API 호출)
+            if (lowerMessage.includes('날씨')) {
+                try {
+                    const searchResult = await searchGoogle('오늘 날씨 서울');
+                    return searchResult;
+                } catch (error) {
+                    return '날씨 정보를 가져오는 중 오류가 발생했습니다. 날씨 앱을 확인해주세요! ☔';
+                }
+            }
+            
+            // 뉴스 관련 (실제 API 호출)
+            if (lowerMessage.includes('뉴스') || lowerMessage.includes('소식')) {
+                try {
+                    const searchResult = await searchGoogle('오늘 뉴스 헤드라인');
+                    return searchResult;
+                } catch (error) {
+                    return '뉴스 정보를 가져오는 중 오류가 발생했습니다. 뉴스 앱을 확인해주세요! 📰';
+                }
+            }
+            
+            // 요리/음식 관련
+            if (lowerMessage.includes('요리') || lowerMessage.includes('음식') || lowerMessage.includes('레시피')) {
+                try {
+                    const searchResult = await searchGoogle('간단한 요리 레시피 부부');
+                    return searchResult;
+                } catch (error) {
+                    return '🍳 간단한 요리 추천:\n\n• 김치볶음밥\n• 라면에 계란 토핑\n• 간단한 파스타\n• 샌드위치\n• 계란말이\n\n함께 만들어보세요! 😊';
+                }
+            }
+            
+            // 건강 관련
+            if (lowerMessage.includes('운동') || lowerMessage.includes('건강') || lowerMessage.includes('다이어트')) {
+                const healthTips = [
+                    '🚶‍♀️ 매일 30분 함께 산책하기',
+                    '💧 하루 2L 물 마시기',
+                    '🧘‍♀️ 10분 스트레칭 루틴',
+                    '🏃‍♂️ 주 3회 30분 조깅',
+                    '💪 홈트레이닝 영상 따라하기',
+                    '🥗 건강한 식단 계획하기',
+                    '😴 충분한 수면 취하기 (7-8시간)',
+                    '📱 스마트폰 사용 줄이기'
+                ];
+                const randomTip = healthTips[Math.floor(Math.random() * healthTips.length)];
+                return `💪 건강한 생활 습관 추천:\n\n"${randomTip}"\n\n함께 건강해져요! 화이팅! 🔥`;
+            }
+            
+            // 인사
+            if (lowerMessage.includes('안녕') || lowerMessage.includes('하이') || lowerMessage.includes('헬로')) {
+                const greetings = [
+                    '안녕하세요! 👋 오늘도 좋은 하루 보내세요!',
+                    '반가워요! 😊 무엇을 도와드릴까요?',
+                    '안녕하세요! 🌟 오늘은 어떤 하루를 계획하고 계신가요?',
+                    '하이! 👋 함께 productive한 하루 만들어봐요!'
+                ];
+                return greetings[Math.floor(Math.random() * greetings.length)];
+            }
+            
+            // 감사 인사
+            if (lowerMessage.includes('고마워') || lowerMessage.includes('감사')) {
+                return '천만에요! 😊 언제든지 도움이 필요하시면 말씀해주세요! 부부가 함께 행복한 하루 보내세요! 💕';
+            }
+            
+            // 시간 관련
+            if (lowerMessage.includes('시간') || lowerMessage.includes('몇시')) {
+                const now = new Date();
+                const timeStr = now.toLocaleString('ko-KR', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                return `⏰ 현재 시간: ${timeStr}\n\n시간이 참 빠르네요! 소중한 시간 잘 보내세요! ✨`;
+            }
+            
+            // 일반적인 검색 질문이면 Google 검색 실행
+            if (lowerMessage.includes('?') || lowerMessage.includes('알려줘') || lowerMessage.includes('찾아줘')) {
+                try {
+                    const searchResult = await searchGoogle(message);
+                    return searchResult;
+                } catch (error) {
+                    return '검색 중 오류가 발생했습니다. 다시 시도해주세요! 🔍';
+                }
+            }
+            
+            // 기본 응답
+            const responses = [
+                '흥미로운 질문이네요! 🤔 더 자세히 설명해주실 수 있을까요?',
+                '그것에 대해 검색해보시겠어요? 구체적인 키워드를 알려주세요! 🔍',
+                '좋은 질문입니다! 😊 어떤 정보가 가장 필요하신지 알려주세요.',
+                '할일 관리나 일상 정보 검색을 도와드릴 수 있어요! ✅ 무엇이 궁금하신가요?'
+            ];
+            
+            return responses[Math.floor(Math.random() * responses.length)];
+        }
+
+        // 키보드 단축키
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                if (document.activeElement.id === 'todoInput') {
+                    addTodo();
+                }
+            }
+            
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal.show').forEach(modal => {
+                    modal.classList.remove('show');
+                });
+                
+                if (window.innerWidth < 768) {
+                    closeChatbot();
+                }
+            }
+            
+            if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+                e.preventDefault();
+                const chatbot = document.getElementById('chatbotContainer');
+                if (chatbot.classList.contains('open')) {
+                    closeChatbot();
+                } else {
+                    openChatbot();
+                }
+            }
+        });
+
+        // 초기화 실행
+        init();
+        
+        // 스마트폰에서는 챗봇을 닫힌 상태로 시작
+        if (window.innerWidth < 768) {
+            document.getElementById('chatbotContainer').classList.remove('open');
+        }
+
+        // PWA 설치 감지
+        let deferredPrompt;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // 설치 버튼 표시 (선택사항)
+            const installBtn = document.createElement('button');
+            installBtn.innerHTML = '📱 앱 설치';
+            installBtn.style.cssText = `
+                position: fixed;
+                top: 70px;
+                right: 20px;
+                background: var(--ios-blue);
+                color: white;
+                border: none;
+                border-radius: 20px;
+                padding: 8px 16px;
+                font-size: 14px;
+                cursor: pointer;
+                z-index: 999;
+            `;
+            
+            installBtn.onclick = async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const result = await deferredPrompt.userChoice;
+                    if (result.outcome === 'accepted') {
+                        installBtn.remove();
+                    }
+                    deferredPrompt = null;
+                }
+            };
+            
+            document.body.appendChild(installBtn);
+            
+            // 5초 후 자동 숨김
+            setTimeout(() => {
+                if (installBtn.parentNode) {
+                    installBtn.remove();
+                }
+            }, 5000);
+        });
+
+        // 서비스 워커 등록 (HTTPS 환경에서만)
+        if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch((registrationError) => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+    </script>
+</body>
+</html><!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="manifest" href="manifest.json" />
-    <meta name="theme-color" content="#3B82F6" />
-    <title>AI 영어 문장 학습</title>
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/framer-motion@10/dist/framer-motion.umd.min.js"></script>
-    
+    <title>부부 할일관리 with AI</title>
+    <link rel="manifest" href="manifest.json">
     <style>
-        .toggle-checkbox:checked { right: 0; border-color: #3B82F6; }
-        .toggle-checkbox:checked + .toggle-label { background-color: #3B82F6; }
-        .range-thumb::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: #3B82F6; cursor: pointer; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 2px rgba(0,0,0,0.3); }
-        .range-thumb::-moz-range-thumb { width: 20px; height: 20px; background: #3B82F6; cursor: pointer; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 2px rgba(0,0,0,0.3); }
-    </style>
-</head>
-<body>
-    <div id="root"></div>
-
-    <script type="text/babel">
-        const { useState, useEffect, useMemo, useCallback, useRef } = React;
-        const { motion, AnimatePresence } = framer;
-
-        // --- 컴포넌트 ---
-        const Header = ({ currentPlace, onSettingsClick, currentIndex, totalCount }) => (
-            <div className="flex justify-between items-center p-4">
-                <div className="flex items-center"><h1 className="text-2xl font-bold text-gray-800">{currentPlace}</h1>{totalCount > 0 && (<span className="ml-3 text-sm font-medium text-gray-500 bg-gray-200 px-2 py-1 rounded-full">{currentIndex + 1} / {totalCount}</span>)}</div>
-                <button onClick={onSettingsClick} className="p-2 rounded-full hover:bg-gray-200 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg></button>
-            </div>
-        );
-
-        const SentenceCard = ({ sentence, settings, onFavorite, isFavorite, onAnalyze, onRoleplay }) => {
-            if (!sentence) return (<div className="bg-white rounded-2xl shadow-lg p-6 m-4 flex-grow flex flex-col justify-center items-center"><p className="text-gray-500">이 조건에 맞는 문장이 없습니다.</p></div>);
-            return (
-                <motion.div key={sentence.id} initial={{ opacity: 0, y: 20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -20, scale: 0.95 }} transition={{ duration: 0.4, ease: "easeInOut" }} className="bg-white rounded-2xl shadow-lg p-6 m-4 flex-grow flex flex-col justify-between">
-                    <div>
-                        <div className="flex justify-between items-start">
-                            <p className="text-2xl md:text-3xl font-semibold text-gray-800 leading-tight pr-4">{sentence.english}</p>
-                            <button onClick={() => onFavorite(sentence.id)} className="p-1 -mr-2 -mt-2 flex-shrink-0"><svg xmlns="http://www.w3.org/2000/svg" className={`h-7 w-7 transition-colors ${isFavorite ? 'text-yellow-400' : 'text-gray-300 hover:text-yellow-300'}`} viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg></button>
-                        </div>
-                        <AnimatePresence>{settings.showTranslation && (<motion.p initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.3 }} className="text-gray-500 mt-4 text-lg">{sentence.korean}</motion.p>)}</AnimatePresence>
-                    </div>
-                    <div className="w-full">
-                        <AnimatePresence>{settings.showWords && sentence.words && (<motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} transition={{ duration: 0.3, delay: 0.1 }} className="my-6 pt-4 border-t border-gray-100"><h3 className="font-bold text-gray-600 mb-2">주요 단어</h3><ul className="space-y-1">{sentence.words.map((word, index) => (<li key={index} className="text-gray-700"><span className="font-semibold">{word.word}</span>: {word.meaning}</li>))}</ul></motion.div>)}</AnimatePresence>
-                        <div className="flex gap-2 pt-4 border-t border-gray-100">
-                            <button onClick={() => onAnalyze(sentence.english)} className="flex-1 py-2 px-3 bg-blue-100 text-blue-700 rounded-lg font-semibold text-sm hover:bg-blue-200 transition-colors flex items-center justify-center gap-2">✨ 문장 분석</button>
-                            <button onClick={() => onRoleplay(sentence.english)} className="flex-1 py-2 px-3 bg-purple-100 text-purple-700 rounded-lg font-semibold text-sm hover:bg-purple-200 transition-colors flex items-center justify-center gap-2">✨ 롤플레이</button>
-                        </div>
-                    </div>
-                </motion.div>
-            );
-        };
-
-        const Controls = ({ onPrev, onNext, onPlay, isSpeaking, disabled }) => (
-            <div className="flex justify-center items-center space-x-8 p-4"><button onClick={onPrev} disabled={disabled} className="p-3 rounded-full bg-white shadow-md hover:bg-gray-50 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg></button><button onClick={onPlay} disabled={disabled} className={`p-5 rounded-full bg-blue-500 text-white shadow-lg hover:bg-blue-600 active:scale-95 transition-all transform disabled:opacity-50 disabled:cursor-not-allowed ${isSpeaking ? 'scale-110 bg-blue-700' : ''}`}><svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></button><button onClick={onNext} disabled={disabled} className="p-3 rounded-full bg-white shadow-md hover:bg-gray-50 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></button></div>
-        );
-
-        const SettingsSheet = ({ isOpen, onClose, settings, onSettingsChange, places, onCopyFavorites, copyStatus }) => (
-            <AnimatePresence>{isOpen && (<>
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="fixed inset-0 bg-black bg-opacity-50 z-40" />
-                <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", stiffness: 300, damping: 30 }} className="fixed bottom-0 left-0 right-0 bg-gray-100 rounded-t-2xl p-6 z-50 max-w-md mx-auto overflow-y-auto max-h-[90vh]">
-                    <div className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-4"></div><h2 className="text-xl font-bold text-center mb-6">설정</h2>
-                    <div className="space-y-6">
-                        <div><label className="text-sm font-medium text-gray-600">장소</label><select value={settings.place} onChange={e => onSettingsChange('place', e.target.value)} className="w-full mt-1 p-3 bg-white rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:outline-none">{places.map(p => <option key={p} value={p}>{p}</option>)}</select></div>
-                        <div><label className="text-sm font-medium text-gray-600">난이도</label><div className="flex justify-between mt-1 space-x-2">{['종합', '초급', '중급', '고급'].map(level => (<button key={level} onClick={() => onSettingsChange('difficulty', level)} className={`w-full py-2 rounded-lg text-sm font-semibold transition-colors ${settings.difficulty === level ? 'bg-blue-500 text-white' : 'bg-white hover:bg-gray-50'}`}>{level}</button>))}</div></div>
-                        <div><label className="text-sm font-medium text-gray-600 flex justify-between"><span>자동 넘김 (초)</span><span className="font-bold text-blue-500">{settings.timer === 0 ? '꺼짐' : `${settings.timer}초`}</span></label><input type="range" min="0" max="10" step="1" value={settings.timer} onChange={e => onSettingsChange('timer', parseInt(e.target.value))} className="w-full mt-2 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-thumb" /></div>
-                        <div><label className="text-sm font-medium text-gray-600 flex justify-between"><span>듣기 속도</span><span className="font-bold text-blue-500">{settings.ttsSpeed.toFixed(1)}배속</span></label><input type="range" min="0.5" max="1.5" step="0.1" value={settings.ttsSpeed} onChange={e => onSettingsChange('ttsSpeed', parseFloat(e.target.value))} className="w-full mt-2 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-thumb" /></div>
-                        <div className="space-y-3">
-                            <div className="flex justify-between items-center bg-white p-3 rounded-lg"><label htmlFor="showTranslation" className="text-gray-700">한글 해설 보기</label><div className={`relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in`}><input type="checkbox" id="showTranslation" checked={settings.showTranslation} onChange={e => onSettingsChange('showTranslation', e.target.checked)} className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/><label htmlFor="showTranslation" className="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label></div></div>
-                            <div className="flex justify-between items-center bg-white p-3 rounded-lg"><label htmlFor="showWords" className="text-gray-700">주요 단어 보기</label><div className={`relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in`}><input type="checkbox" id="showWords" checked={settings.showWords} onChange={e => onSettingsChange('showWords', e.target.checked)} className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/><label htmlFor="showWords" className="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label></div></div>
-                        </div>
-                        <div><button onClick={onCopyFavorites} className="w-full py-3 bg-white border border-gray-300 text-gray-700 rounded-xl font-bold hover:bg-gray-50 active:scale-95 transition-all">{copyStatus ? copyStatus : '⭐ 즐겨찾기 복사'}</button></div>
-                    </div><button onClick={onClose} className="w-full mt-6 py-3 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 active:scale-95 transition-all">닫기</button>
-                </motion.div></>)}
-            </AnimatePresence>
-        );
-
-        const MarkdownRenderer = ({ text }) => {
-            const html = text
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\*(.*?)\*/g, '<strong>$1</strong>') 
-                .replace(/(\r\n|\n|\r)/gm, "<br>");
-            return <div dangerouslySetInnerHTML={{ __html: html }} />;
-        };
-
-        const GeminiModal = ({ isOpen, onClose, title, content, isLoading, onSpeak, onNext }) => (
-            <AnimatePresence>{isOpen && (<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4" onClick={onClose}>
-                <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[80vh] flex flex-col">
-                    <div className="flex justify-between items-center p-4 border-b border-gray-200">
-                        <h3 className="text-lg font-bold text-gray-800">{title}</h3>
-                        <div className="flex items-center gap-2">
-                           <button onClick={onSpeak} className="p-2 rounded-full hover:bg-gray-200" title="내용 듣기">🔊</button>
-                           <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-200"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
-                        </div>
-                    </div>
-                    <div className="p-6 overflow-y-auto whitespace-pre-wrap flex-grow">
-                        {isLoading ? (
-                            <div className="flex flex-col items-center justify-center h-full"><svg className="animate-spin h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><p className="mt-4 text-gray-500">AI가 답변을 생성 중입니다...</p></div>
-                        ) : (
-                            <div className="text-gray-700 leading-relaxed"><MarkdownRenderer text={content} /></div>
-                        )}
-                    </div>
-                    <div className="p-4 border-t border-gray-200">
-                        <button onClick={onNext} className="w-full py-2 px-4 bg-gray-200 text-gray-800 rounded-lg font-semibold hover:bg-gray-300 transition-colors"➡️ 다음 문장</button>
-                    </div>
-                </motion.div></motion.div>)}
-            </AnimatePresence>
-        );
-
-        function EnglishLearningApp() {
-            const [allSentences, setAllSentences] = useState([]);
-            const [appState, setAppState] = useState({ status: 'loading', message: '영어 문장을 불러오는 중...' });
-            const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
-            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-            const [favorites, setFavorites] = useState([]);
-            const [isSpeaking, setIsSpeaking] = useState(false);
-            const [copyStatus, setCopyStatus] = useState('');
-            const [isModalOpen, setIsModalOpen] = useState(false);
-            const [modalContent, setModalContent] = useState('');
-            const [modalTitle, setModalTitle] = useState('');
-            const [isModalLoading, setIsModalLoading] = useState(false);
-            const [settings, setSettings] = useState(() => { const saved = typeof window !== 'undefined' ? localStorage.getItem('englishAppSettings') : null; return saved ? JSON.parse(saved) : { place: '종합', difficulty: '종합', timer: 0, showTranslation: true, showWords: true, ttsSpeed: 0.9 }; });
-            const timerRef = useRef(null);
-            const [ttsVoice, setTtsVoice] = useState(null);
-            const [koreanTtsVoice, setKoreanTtsVoice] = useState(null);
-
-            useEffect(() => {
-                if ('serviceWorker' in navigator) {
-                    window.addEventListener('load', () => { navigator.serviceWorker.register('./service-worker.js').then(reg => console.log('SW registered.')).catch(err => console.log('SW registration failed: ', err)); });
-                }
-            }, []);
-
-            useEffect(() => {
-                const fetchSentences = async () => {
-                    setAppState({ status: 'loading', message: 'Gemini AI와 연결 중...' });
-                    const apiKey = 'AIzaSyACAoKxi4NsWm-zstIVpXLTh4apZmGz7Z0';
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-                    const prompt = `아래 10개의 장소 목록에서 중복되지 않는 4개의 장소를 무작위로 선택해줘: ['공항', '카페', '식당', '호텔', '쇼핑몰', '지하철', '버스', '도서관', '영화관', '병원']. 선택된 각 장소마다, 실생활에서 자주 사용하는 영어 문장을 10개씩 생성해줘. 각 문장은 난이도('초급', '중급', '고급')를 포함해야 하고, 전체 40개의 문장과 장소는 서로 중복되면 안 돼. 반드시 아래와 같은 JSON 형식의 배열로만 응답해야 해. 다른 설명은 절대 추가하지 마. [{"id": "unique_string_id_1", "place": "선택된 장소", "difficulty": "난이도", "english": "영어 문장", "korean": "한국어 번역", "words": [{"word": "주요 단어", "meaning": "단어 뜻"}]}]`;
-                    const payload = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } };
-                    try {
-                        setAppState({ status: 'loading', message: 'AI가 문장을 생성 중입니다...' });
-                        const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                        const result = await response.json();
-                        if (!response.ok) throw new Error(result?.error?.message || '알 수 없는 오류');
-                        if (result.candidates?.length > 0) {
-                            const parsedSentences = JSON.parse(result.candidates[0].content.parts[0].text);
-                            const cleanedSentences = parsedSentences.map((s, i) => ({ ...s, id: `${s.place?.trim() || 'unknown'}-${s.difficulty?.trim() || 'unknown'}-${i}`, place: s.place?.trim(), difficulty: s.difficulty?.trim() }));
-                            setAllSentences(cleanedSentences); setAppState({ status: 'success', message: '성공' });
-                        } else { throw new Error("API로부터 유효한 문장을 받지 못했습니다."); }
-                    } catch (error) { console.error("Failed to fetch from Gemini:", error); setAppState({ status: 'error', message: `문장 생성 실패: ${error.message}` }); }
-                };
-                fetchSentences();
-            }, []);
-
-            useEffect(() => { localStorage.setItem('englishAppSettings', JSON.stringify(settings)); }, [settings]);
-            useEffect(() => { const saved = localStorage.getItem('englishAppFavorites'); if (saved) setFavorites(JSON.parse(saved)); }, []);
-            useEffect(() => {
-                const loadVoices = () => {
-                    if (typeof window.speechSynthesis === 'undefined') return;
-                    const voices = window.speechSynthesis.getVoices();
-                    setTtsVoice(voices.find(v => v.lang.startsWith('en-US') && v.name.includes('Female')) || voices.find(v => v.lang.startsWith('en-US')));
-                    setKoreanTtsVoice(voices.find(v => v.lang.startsWith('ko-KR')));
-                };
-                loadVoices(); if (window.speechSynthesis.onvoiceschanged !== undefined) { window.speechSynthesis.onvoiceschanged = loadVoices; }
-            }, []);
-            
-            const filteredSentences = useMemo(() => {
-                if (appState.status !== 'success') return [];
-                let result = [...allSentences];
-                if (settings.place !== '종합') result = result.filter(s => s.place === settings.place);
-                if (settings.difficulty !== '종합') result = result.filter(s => s.difficulty === settings.difficulty);
-                if (settings.difficulty === '종합') {
-                    const difficultyOrder = { '초급': 1, '중급': 2, '고급': 3 };
-                    result.sort((a, b) => (difficultyOrder[a.difficulty] || 99) - (difficultyOrder[b.difficulty] || 99));
-                } else { for (let i = result.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [result[i], result[j]] = [result[j], result[i]]; } }
-                return result;
-            }, [allSentences, settings.place, settings.difficulty, appState.status]);
-
-            const places = useMemo(() => { if (allSentences.length === 0) return ['종합']; return ['종합', ...new Set(allSentences.map(s => s.place))]; }, [allSentences]);
-            
-            const currentSentence = filteredSentences[currentSentenceIndex];
-            const handleNext = useCallback(() => { if(filteredSentences.length === 0) return; setCurrentSentenceIndex(p => (p + 1) % filteredSentences.length); }, [filteredSentences.length]);
-            const handlePrev = () => { if(filteredSentences.length === 0) return; setCurrentSentenceIndex(p => (p - 1 + filteredSentences.length) % filteredSentences.length); };
-            
-            const speakText = (text, lang, rate, voice) => {
-                if (!text || typeof window.speechSynthesis === 'undefined') return;
-                window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(text);
-                if (voice) utterance.voice = voice;
-                utterance.lang = lang;
-                utterance.rate = rate;
-                utterance.onstart = () => setIsSpeaking(true);
-                utterance.onend = () => setIsSpeaking(false);
-                utterance.onerror = () => setIsSpeaking(false);
-                window.speechSynthesis.speak(utterance);
-            };
-
-            const handlePlay = () => speakText(currentSentence?.english, 'en-US', settings.ttsSpeed, ttsVoice);
-            const handleSettingsChange = (key, value) => { setSettings(p => ({ ...p, [key]: value })); if (key !== 'timer' && key !== 'ttsSpeed') setCurrentSentenceIndex(0); };
-            const handleFavorite = (id) => { if(!id) return; setFavorites(p => { const n = p.includes(id) ? p.filter(i => i !== id) : [...p, id]; localStorage.setItem('englishAppFavorites', JSON.stringify(n)); return n; }); };
-            const handleCopyFavorites = () => {
-                if (favorites.length === 0) { setCopyStatus('즐겨찾기 없음'); setTimeout(() => setCopyStatus(''), 2000); return; }
-                const textToCopy = allSentences.filter(s => favorites.includes(s.id)).map(s => `English: ${s.english}\nKorean: ${s.korean}`).join('\n\n');
-                const ta = document.createElement('textarea'); ta.value = textToCopy; document.body.appendChild(ta); ta.select();
-                try { document.execCommand('copy'); setCopyStatus('복사 완료!'); } catch (err) { setCopyStatus('복사 실패'); }
-                document.body.removeChild(ta); setTimeout(() => setCopyStatus(''), 2000);
-            };
-
-            const callGemini = async (prompt) => {
-                setIsModalLoading(true);
-                const apiKey = 'AIzaSyACAoKxi4NsWm-zstIVpXLTh4apZmGz7Z0';
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-                const payload = { contents: [{ parts: [{ text: prompt }] }] };
-                try {
-                    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                    const result = await response.json();
-                    if (!response.ok) throw new Error(result?.error?.message || 'AI 응답 오류');
-                    setModalContent(result.candidates[0].content.parts[0].text);
-                } catch (error) { setModalContent(`오류가 발생했습니다: ${error.message}`); } finally { setIsModalLoading(false); }
-            };
-
-            const handleAnalyzeSentence = (sentence) => { setModalTitle('✨ 문장 분석'); setModalContent(''); setIsModalOpen(true); const prompt = `당신은 친절한 영어 선생님입니다. 다음 영어 문장을 문법, 주요 표현, 뉘앙스에 초점을 맞춰 한국어로 심층 분석하고 설명해주세요. 학습자가 이해하기 쉽게 단계별로 나눠서 설명해주세요:\n\n"${sentence}"`; callGemini(prompt); };
-            const handleGenerateRoleplay = (sentence) => { setModalTitle('✨ 롤플레이 대화'); setModalContent(''); setIsModalOpen(true); const prompt = `다음 영어 문장이 사용될 수 있는 자연스러운 롤플레이 대화문을 영어와 한국어 번역으로 생성해주세요. Speaker A와 Speaker B가 등장하는 짧은 대화 형식이어야 합니다:\n\n"${sentence}"`; callGemini(prompt); };
-            const handleModalNext = () => { setIsModalOpen(false); setTimeout(() => handleNext(), 150); };
-
-            useEffect(() => { if (timerRef.current) clearInterval(timerRef.current); if (settings.timer > 0 && filteredSentences.length > 0) { timerRef.current = setInterval(handleNext, settings.timer * 1000); } return () => { if (timerRef.current) clearInterval(timerRef.current); }; }, [settings.timer, handleNext, filteredSentences.length]);
-            
-            if (appState.status === 'loading') return (<div className="font-sans bg-gray-50 h-screen w-screen flex items-center justify-center"><div className="flex flex-col items-center space-y-4 text-center px-4"><svg className="animate-spin h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><div className="text-lg font-semibold text-gray-600">{appState.message}</div></div></div>);
-            if (appState.status === 'error') return (<div className="font-sans bg-gray-50 h-screen w-screen flex items-center justify-center"><div className="flex flex-col items-center space-y-4 text-center px-8"><svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><h2 className="text-xl font-bold text-gray-800">오류가 발생했습니다</h2><p className="text-sm text-gray-500 bg-red-100 p-2 rounded-md">{appState.message}</p><p className="text-sm text-gray-500">API 키가 유효한지, Google Cloud 프로젝트에서 Generative Language API가 활성화되었는지 확인해 주세요.</p><button onClick={() => window.location.reload()} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-colors">다시 시도</button></div></div>);
-
-            return (
-                <div className="font-sans bg-gray-50 h-screen w-screen flex items-center justify-center">
-                    <div className="relative w-full max-w-md h-full md:h-[90vh] md:max-h-[800px] bg-gray-100 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
-                        <Header currentPlace={settings.place} onSettingsClick={() => setIsSettingsOpen(true)} currentIndex={currentSentenceIndex} totalCount={filteredSentences.length} />
-                        <main className="flex-grow flex flex-col justify-center min-h-0">
-                            <AnimatePresence mode="wait"><SentenceCard sentence={currentSentence} settings={settings} onFavorite={handleFavorite} isFavorite={favorites.includes(currentSentence?.id)} onAnalyze={handleAnalyzeSentence} onRoleplay={handleGenerateRoleplay} /></AnimatePresence>
-                        </main>
-                        <Controls onPrev={handlePrev} onNext={handleNext} onPlay={handlePlay} isSpeaking={isSpeaking} disabled={filteredSentences.length === 0} />
-                        <SettingsSheet isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} settings={settings} onSettingsChange={handleSettingsChange} places={places} onCopyFavorites={handleCopyFavorites} copyStatus={copyStatus} />
-                        <GeminiModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={modalTitle} content={modalContent} isLoading={isModalLoading} onSpeak={() => speakText(modalContent, 'ko-KR', 1.0, koreanTtsVoice)} onNext={handleModalNext} />
-                    </div>
-                </div>
-            );
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<EnglishLearningApp />);
-    </script>
-</body>
-</html>
+        :root {
+            --ios-blue: #007AFF;
+            --ios-green: #34C759;
+            --ios-red: #FF3B30;
+            --ios-orange: #FF9500;
+            --ios-purple: #AF52DE;
+            --ios-pink: #FF2D92;
+            --ios-yellow: #FFCC00;
+            --ios-teal: #5AC8FA;
+            
+            --ios-gray-1: #F2F1F6;
+            --ios-gray-2: #E5E5EA;
+            --ios-gray-3: #D1D1D6;
+            --ios-gray-4: #C7C7CC;
+            --ios-gray-5: #AEAEB2;
+            --ios-gray-6: #8E8E93;
+            
+            --ios-black: #000000;
+            --ios-dark-gray: #1C1C1E;
+            --ios-text-primary: #000000;
+            --ios-text-secondary: #3C3C43;
+            --ios-text-tertiary: #8E8E93;
+            
+            --ios-card-bg: rgba(255, 255, 255, 0.8);
+            --ios-overlay: rgba(0, 0, 0, 0.4);
+            
+            --ios-border-radius: 12px;
+            --ios-corner-radius: 20px;
+            --ios-blur: blur(20px);
+            --ios-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            --ios-shadow-large: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        @supports (-webkit-backdrop-filter: blur(20px)) or (backdrop-filter: blur(20px)) {
+            :root {
+                --ios-card-bg: rgba(255, 255, 255, 0.7);
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            background: linear-gradient(145deg, #F2F1F6 0%, #E5E5EA 100%);
+            min-height: 100vh;
+            color: var(--ios-text-primary);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            font-size: 17px;
+            line-height: 1.47;
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        .main-app {
+            max-width: 428px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .status-bar {
+            height: 44px;
+            background: var(--ios-card-bg);
+            backdrop-filter: var(--ios-blur);
+            -webkit-backdrop-filter: var(--ios-blur);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 0.5px solid var(--ios-gray-3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .time {
+            font-weight: 600;
+            font-size: 17px;
+            color: var(--ios-text-primary);
+        }
+
+        .header {
+            padding: 20px 20px 30px 20px;
+            text-align: center;
+            background: var(--ios-card-bg);
+            backdrop-filter: var(--ios-blur);
+            -webkit-backdrop-filter: var(--ios-blur);
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 34px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--ios-text-primary);
+            letter-spacing: -0.5px;
+        }
+
+        .header .subtitle {
+            font-size: 15px;
+            color: var(--ios-text-secondary);
+            font-weight: 400;
+        }
+
+        .settings-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--ios-gray-2);
+            border: none;
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .settings-btn:active {
+            transform: scale(0.95);
+            background: var(--ios-gray-3);
+        }
+
+        .stats-container {
+            padding: 0 20px 20px 20px;
+            background: var(--ios-card-bg);
+            backdrop-filter: var(--ios-blur);
+            -webkit-backdrop-filter: var(--ios-blur);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: var(--ios-border-radius);
+            padding: 16px;
+            box-shadow: var(--ios-shadow);
+            border: 0.5px solid var(--ios-gray-2);
+            text-align: center;
+            transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .stat-card:active {
+            transform: scale(0.95);
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: var(--ios-blue);
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--ios-text-secondary);
+            font-weight: 500;
+        }
+
+        .main-content {
+            background: var(--ios-gray-1);
+            min-height: calc(100vh - 200px);
+            padding: 20px;
+        }
+
+        .section {
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--ios-text-primary);
+            padding-left: 4px;
+        }
+
+        .tabs-container {
+            background: white;
+            border-radius: var(--ios-corner-radius);
+            padding: 16px;
+            box-shadow: var(--ios-shadow);
+            border: 0.5px solid var(--ios-gray-2);
+        }
+
+        .tab-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .tab {
+            background: var(--ios-gray-1);
+            border: none;
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--ios-text-primary);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tab:active {
+            transform: scale(0.95);
+        }
+
+        .tab.active {
+            background: var(--ios-blue);
+            color: white;
+            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+        }
+
+        .tab-count {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 2px 6px;
+            font-size: 12px;
+            font-weight: 600;
+            min-width: 18px;
+            text-align: center;
+        }
+
+        .tab.active .tab-count {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .tab-close {
+            background: rgba(0, 0, 0, 0.1);
+            border: none;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            margin-left: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            color: var(--ios-text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .tab-close:hover {
+            background: rgba(0, 0, 0, 0.15);
+        }
+
+        .tab.active .tab-close {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .add-tab-btn {
+            background: var(--ios-gray-2);
+            border: none;
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--ios-blue);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .add-tab-btn:active {
+            transform: scale(0.95);
+            background: var(--ios-gray-3);
+        }
+
+        .input-container {
+            background: white;
+            border-radius: var(--ios-corner-radius);
+            padding: 20px;
+            box-shadow: var(--ios-shadow);
+            border: 0.5px solid var(--ios-gray-2);
+        }
+
+        .input-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .todo-input {
+            flex: 1;
+            min-width: 200px;
+            background: var(--ios-gray-1);
+            border: none;
+            border-radius: var(--ios-border-radius);
+            padding: 12px 16px;
+            font-size: 17px;
+            color: var(--ios-text-primary);
+            transition: all 0.2s ease;
+        }
+
+        .todo-input:focus {
+            outline: none;
+            background: white;
+            box-shadow: 0 0 0 2px var(--ios-blue);
+        }
+
+        .todo-input::placeholder {
+            color: var(--ios-text-tertiary);
+        }
+
+        .priority-select {
+            background: var(--ios-gray-1);
+            border: none;
+            border-radius: var(--ios-border-radius);
+            padding: 12px 16px;
+            font-size: 15px;
+            color: var(--ios-text-primary);
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 12px center;
+            background-repeat: no-repeat;
+            background-size: 16px;
+            padding-right: 40px;
+            min-width: 180px;
+        }
+
+        .add-btn {
+            background: var(--ios-blue);
+            border: none;
+            border-radius: var(--ios-border-radius);
+            padding: 12px 20px;
+            font-size: 17px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+            white-space: nowrap;
+        }
+
+        .add-btn:active {
+            transform: scale(0.95);
+            background: #0056CC;
+        }
+
+        .filter-container {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .filter-btn {
+            background: var(--ios-gray-2);
+            border: none;
+            border-radius: 16px;
+            padding: 6px 12px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--ios-text-secondary);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .filter-btn:active {
+            transform: scale(0.95);
+        }
+
+        .filter-btn.active {
+            background: var(--ios-blue);
+            color: white;
+        }
+
+        .todo-list-container {
+            background: white;
+            border-radius: var(--ios-corner-radius);
+            box-shadow: var(--ios-shadow);
+            border: 0.5px solid var(--ios-gray-2);
+            overflow: hidden;
+        }
+
+        .todo-item {
+            padding: 16px 20px;
+            border-bottom: 0.5px solid var(--ios-gray-2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .todo-item:last-child {
+            border-bottom: none;
+        }
+
+        .todo-item:active {
+            background: var(--ios-gray-1);
+        }
+
+        .todo-item.completed {
+            opacity: 0.6;
+        }
+
+        .todo-checkbox {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--ios-gray-4);
+            border-radius: 50%;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .todo-checkbox.checked {
+            background: var(--ios-green);
+            border-color: var(--ios-green);
+        }
+
+        .todo-checkbox.checked::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .todo-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .todo-text {
+            font-size: 17px;
+            color: var(--ios-text-primary);
+            margin-bottom: 2px;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .todo-item.completed .todo-text {
+            text-decoration: line-through;
+            color: var(--ios-text-tertiary);
+        }
+
+        .todo-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--ios-text-tertiary);
+        }
+
+        .priority-badge {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .priority-high { background: var(--ios-red); }
+        .priority-medium { background: var(--ios-orange); }
+        .priority-low { background: var(--ios-green); }
+
+        .todo-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .action-btn {
+            background: var(--ios-gray-2);
+            border: none;
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--ios-text-secondary);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .action-btn:active {
+            transform: scale(0.9);
+        }
+
+        .action-btn.edit {
+            color: var(--ios-blue);
+        }
+
+        .action-btn.delete {
+            color: var(--ios-red);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--ios-text-tertiary);
+        }
+
+        .empty-state .emoji {
+            font-size: 48px;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--ios-text-secondary);
+        }
+
+        .empty-state p {
+            font-size: 15px;
+            line-height: 1.4;
+        }
+
+        /* 챗봇 스타일 */
+        .chatbot-container {
+            background: white;
+            border-radius: var(--ios-corner-radius);
+            box-shadow: var(--ios-shadow-large);
+            border: 0.5px solid var(--ios-gray-2);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 100%;
+            z-index: 1000;
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .chatbot-container.open {
+            transform: translateY(0);
+        }
+
+        .chatbot-header {
+            padding: 20px;
+            border-bottom: 0.5px solid var(--ios-gray-2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--ios-card-bg);
+            backdrop-filter: var(--ios-blur);
+            -webkit-backdrop-filter: var(--ios-blur);
+        }
+
+        .chatbot-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--ios-text-primary);
+        }
+
+        .close-chatbot {
+            background: var(--ios-gray-2);
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            font-size: 16px;
+            color: var(--ios-text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .close-chatbot:active {
+            transform: scale(0.9);
+            background: var(--ios-gray-3);
+        }
+
+        .chatbot-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 16px;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .message.user {
+            background: var(--ios-blue);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 6px;
+        }
+
+        .message.bot {
+            background: var(--ios-gray-1);
+            color: var(--ios-text-primary);
+            align-self: flex-start;
+            border-bottom-left-radius: 6px;
+        }
+
+        .message.loading {
+            background: var(--ios-gray-1);
+            color: var(--ios-text-tertiary);
+            align-self: flex-start;
+            border-bottom-left-radius: 6px;
+            padding: 16px;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--ios-text-tertiary);
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.5;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+
+        .chatbot-input-container {
+            padding: 20px;
+            border-top: 0.5px solid var(--ios-gray-2);
+            background: var(--ios-card-bg);
+            backdrop-filter: var(--ios-blur);
+            -webkit-backdrop-filter: var(--ios-blur);
+        }
+
+        .chatbot-input-row {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .chatbot-input {
+            flex: 1;
+            background: var(--ios-gray-1);
+            border: none;
+            border-radius: 20px;
+            padding: 12px 16px;
+            font-size: 16px;
+            color: var(--ios-text-primary);
+            resize: none;
+            max-height: 100px;
+            min-height: 44px;
+            transition: all 0.2s ease;
+        }
+
+        .chatbot-input:focus {
+            outline: none;
+            background: white;
+            box-shadow: 0 0 0 2px var(--ios-blue);
+        }
+
+        .chatbot-send {
+            background: var(--ios-blue);
+            border: none;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            cursor: pointer;
+            color: white;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            flex-shrink: 0;
+        }
+
+        .chatbot-send:active {
+            transform: scale(0.9);
+            background: #0056CC;
+        }
+
+        .chatbot-send:disabled {
+            background: var(--ios-gray-4);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .floating-chat-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: var(--ios-blue);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(0, 122, 255, 0.4);
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            z-index: 999;
+        }
+
+        .floating-chat-btn:active {
+            transform: scale(0.9);
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--ios-overlay);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+            backdrop-filter: var(--ios-blur);
+            -webkit-backdrop-filter: var(--ios-blur);
+        }
+
+        .modal.show {
+            display: flex;
+            animation: modalFadeIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--ios-corner-radius);
+            width: 100%;
+            max-width: 320px;
+            box-shadow: var(--ios-shadow-large);
+            animation: modalSlideUp 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .modal-header {
+            padding: 20px 20px 0 20px;
+            text-align: center;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--ios-text-primary);
+            margin-bottom: 16px;
+        }
+
+        .modal-input {
+            background: var(--ios-gray-1);
+            border: none;
+            border-radius: var(--ios-border-radius);
+            padding: 12px 16px;
+            font-size: 17px;
+            width: 100%;
+            margin-bottom: 20px;
+            color: var(--ios-text-primary);
+        }
+
+        .modal-input:focus {
+            outline: none;
+            background: white;
+            box-shadow: 0 0 0 2px var(--ios-blue);
+        }
+
+        .modal-actions {
+            border-top: 0.5px solid var(--ios-gray-3);
+            display: flex;
+        }
+
+        .modal-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            padding: 16px;
+            font-size: 17px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .modal-btn:active {
+            background: var(--ios-gray-1);
+        }
+
+        .modal-btn.primary {
+            color: var(--ios-blue);
+            font-weight: 600;
+        }
+
+        .modal-btn.secondary {
+            color: var(--ios-text-primary);
+            border-right: 0.5px solid var(--ios-gray-3);
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .quick-action-btn {
+            background: var(--ios-gray-2);
+            border: none;
+            border-radius: 16px;
+            padding: 6px 12px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--ios-blue);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .quick-action-btn:active {
+            transform: scale(0.95);
+            background: var(--ios-gray-3);
+        }
+
+        /* 스마트폰 최적화 스타일 */
+        @media (max-width: 768px) {
+            .app-container {
+                display: block;
+                padding: 0;
+            }
+            
+            .input-row {
+                flex-direction: column;
+            }
+            
+            .todo-input, .priority-select, .add-btn {
+                width: 100%;
+                min-width: auto;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+            
+            .todo-actions {
+                flex-direction: row;
+                gap: 6px;
+            }
+            
+            .action-btn {
+                font-size: 11px;
+                padding: 4px 8px;
+            }
+            
+            /* 스와이프 제스처를 위한 터치 최적화 */
+            .todo-item {
+                padding: 18px 20px;
+                touch-action: pan-y;
+            }
+            
+            .tab {
+                padding: 10px 18px;
+                font-size: 16px;
+            }
+            
+            .filter-btn {
+                padding: 8px 14px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 16px;
+            }
+            
+            .section-title {
+                font-size: 20px;
+            }
+            
+            .header h1 {
+                font-size: 28px;
+            }
+            
+            .tabs-container, .input-container, .todo-list-container {
+                padding: 12px;
+            }
+        }
+
+        /* 애니메이션 */
+        @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes modalSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes slideIn {
