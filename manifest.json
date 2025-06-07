@@ -1,20 +1,21 @@
 {
-  "short_name": "영어 학습",
-  "name": "AI 영어 문장 학습",
+  "name": "부부 할일관리 with AI",
+  "short_name": "부부 할일 AI",
+  "description": "AI 챗봇과 함께하는 스마트한 부부 할일관리앱",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F2F1F6",
+  "theme_color": "#007AFF",
   "icons": [
     {
-      "src": "https://placehold.co/192x192/EBF4FF/3B82F6?text=Eng",
-      "type": "image/png",
-      "sizes": "192x192"
+      "src": "https://via.placeholder.com/192x192/007AFF/FFFFFF?text=💑",
+      "sizes": "192x192",
+      "type": "image/png"
     },
     {
-      "src": "https://placehold.co/512x512/EBF4FF/3B82F6?text=Eng",
-      "type": "image/png",
-      "sizes": "512x512"
+      "src": "https://via.placeholder.com/512x512/007AFF/FFFFFF?text=💑", 
+      "sizes": "512x512",
+      "type": "image/png"
     }
-  ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#3B82F6",
-  "background_color": "#F3F4F6"
+  ]
 }
