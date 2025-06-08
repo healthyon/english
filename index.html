@@ -1,4 +1,789 @@
-// Gemini AI로 처리
+<button class="quick-action-btn" onclick="addQuickTodo('요리하기')">🍳 요리</button>
+                        <button class="quick-action-btn" onclick="showSmartSuggestion()">🐝 AI추천</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title" id="listTitle">모든 할일</div>
+                <div class="todo-list-container">
+                    <div id="todoList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 챗봇 컨테이너 -->
+    <div class="chatbot-container" id="chatbotContainer">
+        <div class="chatbot-header">
+            <div class="chatbot-title">🐝 꿀벌</div>
+            <button class="close-chatbot" onclick="closeChatbot()">×</button>
+        </div>
+        
+        <div class="chatbot-messages" id="chatMessages">
+            <div class="message bot">
+                안녕하세요! 저는 꿀벌이에요! 🐝✨<br>
+                부부 할일관리와 일상의 모든 질문에 답해드릴게요!<br><br>
+                저는 Google Gemini 1.5 Flash로 구동되는 똑똑한 AI랍니다!
+                
+                <div class="quick-actions" style="margin-top: 12px;">
+                    <button class="quick-action-btn" onclick="sendQuickMessage('오늘 날씨 어때?')">🌤️ 날씨</button>
+                    <button class="quick-action-btn" onclick="sendQuickMessage('부부 데이트 추천해줘')">💑 데이트</button>
+                    <button class="quick-action-btn" onclick="sendQuickMessage('건강한 요리 레시피 알려줘')">🍳 요리</button>
+                    <button class="quick-action-btn" onclick="sendQuickMessage('할일 추천해줘')">✅ 할일</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chatbot-input-container">
+            <div class="chatbot-input-row">
+                <textarea class="chatbot-input" id="chatInput" placeholder="꿀벌에게 궁금한 것을 물어보세요..." rows="1"></textarea>
+                <button class="chatbot-send" id="chatSend" onclick="sendMessage()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="m22 2-7 20-4-9-9-4z"/>
+                        <path d="M22 2 11 13"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 플로팅 챗봇 버튼 -->
+    <button class="floating-chat-btn" onclick="openChatbot()">
+        🐝
+    </button>
+
+    <!-- 모달들 -->
+    <div class="modal" id="tabModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">새 카테고리</div>
+                <input type="text" class="modal-input" id="tabNameInput" placeholder="카테고리 이름">
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn secondary" onclick="closeModal()">취소</button>
+                <button class="modal-btn primary" onclick="confirmTabAction()">추가</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">할일 수정</div>
+                <input type="text" class="modal-input" id="editInput" placeholder="할일 내용">
+                <select class="priority-select" id="editPrioritySelect" style="margin-bottom: 20px; width: 100%;">
+                    <option value="low">🟢 낮은 우선순위</option>
+                    <option value="medium">🟡 보통 우선순위</option>
+                    <option value="high">🔴 높은 우선순위</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn secondary" onclick="closeEditModal()">취소</button>
+                <button class="modal-btn primary" onclick="confirmEditTodo()">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- API 키 설정 모달 -->
+    <div class="modal" id="apiModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">🐝 꿀벌 AI 설정</div>
+                <input type="text" class="modal-input" id="apiKeyInput" placeholder="Google Gemini API 키">
+                <p style="font-size: 14px; color: var(--ios-text-secondary); margin-top: 8px;">
+                    Google AI Studio에서 Gemini API 키를 받아서 입력하세요.<br>
+                    <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: var(--ios-blue);">
+                        🔗 API 키 받으러 가기
+                    </a>
+                </p>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn secondary" onclick="closeApiModal()">취소</button>
+                <button class="modal-btn primary" onclick="saveApiSettings()">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 전역 변수
+        let tabs = ['💼 업무', '🏠 집안일', '🛒 쇼핑', '💑 데이트'];
+        let currentTab = '💼 업무';
+        let todos = {
+            '💼 업무': [
+                { id: 1, text: '회의 준비하기', completed: false, priority: 'high', createdAt: Date.now() },
+                { id: 2, text: '이메일 확인', completed: true, priority: 'medium', createdAt: Date.now() }
+            ],
+            '🏠 집안일': [
+                { id: 3, text: '설거지하기', completed: false, priority: 'medium', createdAt: Date.now() },
+                { id: 4, text: '빨래 널기', completed: true, priority: 'low', createdAt: Date.now() }
+            ],
+            '🛒 쇼핑': [
+                { id: 5, text: '우유와 달걀 사기', completed: false, priority: 'high', createdAt: Date.now() }
+            ],
+            '💑 데이트': []
+        };
+        let nextId = 6;
+        let modalMode = 'add';
+        let editingTab = null;
+        let editingTodo = null;
+        let currentFilter = 'all';
+        let chatHistory = [];
+        let geminiApiKey = 'AIzaSyACAoKxi4NsWm-zstIVpXLTh4apZmGz7Z0';
+
+        // 시간 업데이트
+        function updateTime() {
+            const now = new Date();
+            const time = now.toLocaleTimeString('ko-KR', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+            document.getElementById('currentTime').textContent = time;
+        }
+
+        // 햅틱 피드백
+        function hapticFeedback(element) {
+            if (element) {
+                element.classList.add('haptic');
+                setTimeout(() => element.classList.remove('haptic'), 100);
+            }
+        }
+
+        // 초기화
+        function init() {
+            loadData();
+            loadApiSettings();
+            updateTime();
+            setInterval(updateTime, 1000);
+            renderTabs();
+            renderTodos();
+            updateStats();
+            setupEventListeners();
+            setupChatInput();
+        }
+
+        // 데이터 로드
+        function loadData() {
+            const saved = localStorage.getItem('iosTodoApp');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    tabs = data.tabs || tabs;
+                    currentTab = data.currentTab || tabs[0];
+                    todos = data.todos || todos;
+                    nextId = data.nextId || nextId;
+                    chatHistory = data.chatHistory || [];
+                } catch (e) {
+                    console.log('데이터 로드 실패:', e);
+                }
+            }
+        }
+
+        // API 설정 로드
+        function loadApiSettings() {
+            const settings = localStorage.getItem('geminiApiSettings');
+            if (settings) {
+                try {
+                    const parsed = JSON.parse(settings);
+                    geminiApiKey = parsed.apiKey || geminiApiKey;
+                } catch (e) {
+                    console.log('API 설정 로드 실패:', e);
+                }
+            }
+        }
+
+        // 데이터 저장
+        function saveData() {
+            try {
+                localStorage.setItem('iosTodoApp', JSON.stringify({
+                    tabs, currentTab, todos, nextId, chatHistory
+                }));
+            } catch (e) {
+                console.log('데이터 저장 실패:', e);
+            }
+        }
+
+        // 이벤트 리스너 설정
+        function setupEventListeners() {
+            const todoInput = document.getElementById('todoInput');
+            if (todoInput) {
+                todoInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        addTodo();
+                    }
+                });
+            }
+
+            const tabNameInput = document.getElementById('tabNameInput');
+            if (tabNameInput) {
+                tabNameInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        confirmTabAction();
+                    }
+                });
+            }
+
+            const editInput = document.getElementById('editInput');
+            if (editInput) {
+                editInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        confirmEditTodo();
+                    }
+                });
+            }
+
+            ['tabModal', 'editModal', 'apiModal'].forEach(modalId => {
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.addEventListener('click', function(e) {
+                        if (e.target === this) {
+                            this.classList.remove('show');
+                        }
+                    });
+                }
+            });
+        }
+
+        // 챗 입력 설정
+        function setupChatInput() {
+            const chatInput = document.getElementById('chatInput');
+            const chatSend = document.getElementById('chatSend');
+
+            if (chatInput && chatSend) {
+                chatInput.addEventListener('input', function() {
+                    this.style.height = 'auto';
+                    this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+                    
+                    chatSend.disabled = !this.value.trim();
+                });
+
+                chatInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendMessage();
+                    }
+                });
+            }
+        }
+
+        // 통계 업데이트
+        function updateStats() {
+            const allTodos = Object.values(todos).flat();
+            const total = allTodos.length;
+            const completed = allTodos.filter(t => t.completed).length;
+            const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+            
+            const totalEl = document.getElementById('totalTasks');
+            const completedEl = document.getElementById('completedTasks');
+            const progressEl = document.getElementById('progressPercent');
+            
+            if (totalEl) totalEl.textContent = total;
+            if (completedEl) completedEl.textContent = completed;
+            if (progressEl) progressEl.textContent = progress + '%';
+        }
+
+        // 탭 렌더링
+        function renderTabs() {
+            const tabList = document.getElementById('tabList');
+            if (!tabList) return;
+            
+            tabList.innerHTML = '';
+            
+            tabs.forEach(tab => {
+                const tabElement = document.createElement('button');
+                tabElement.className = `tab ${tab === currentTab ? 'active' : ''}`;
+                
+                const count = (todos[tab] || []).filter(t => !t.completed).length;
+                
+                tabElement.innerHTML = `
+                    ${tab}
+                    ${count > 0 ? `<span class="tab-count">${count}</span>` : ''}
+                    ${tabs.length > 1 ? `<span class="tab-close" onclick="event.stopPropagation(); deleteTab('${tab}')">&times;</span>` : ''}
+                `;
+                
+                tabElement.onclick = () => {
+                    hapticFeedback(tabElement);
+                    switchTab(tab);
+                };
+                
+                tabElement.ondblclick = () => editTab(tab);
+                tabList.appendChild(tabElement);
+            });
+        }
+
+        // 탭 전환
+        function switchTab(tab) {
+            currentTab = tab;
+            renderTabs();
+            renderTodos();
+            updateStats();
+            saveData();
+            const listTitle = document.getElementById('listTitle');
+            if (listTitle) listTitle.textContent = `${tab} 할일`;
+        }
+
+        // 할일 렌더링
+        function renderTodos() {
+            const todoList = document.getElementById('todoList');
+            if (!todoList) return;
+            
+            const currentTodos = todos[currentTab] || [];
+            
+            let filteredTodos = currentTodos;
+            
+            if (currentFilter === 'pending') {
+                filteredTodos = currentTodos.filter(t => !t.completed);
+            } else if (currentFilter === 'completed') {
+                filteredTodos = currentTodos.filter(t => t.completed);
+            } else if (currentFilter === 'high') {
+                filteredTodos = currentTodos.filter(t => t.priority === 'high');
+            }
+            
+            if (filteredTodos.length === 0) {
+                todoList.innerHTML = `
+                    <div class="empty-state">
+                        <span class="emoji">📝</span>
+                        <h3>할일이 없습니다</h3>
+                        <p>새로운 할일을 추가해보세요!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            todoList.innerHTML = filteredTodos.map(todo => `
+                <div class="todo-item ${todo.completed ? 'completed' : ''} slide-in">
+                    <div class="todo-checkbox ${todo.completed ? 'checked' : ''}" 
+                         onclick="toggleTodo(${todo.id})"></div>
+                    <div class="todo-content">
+                        <div class="todo-text">${todo.text}</div>
+                        <div class="todo-meta">
+                            <span class="priority-badge priority-${todo.priority}"></span>
+                            <span>${formatTime(todo.createdAt)}</span>
+                        </div>
+                    </div>
+                    <div class="todo-actions">
+                        <button class="action-btn edit" onclick="editTodo(${todo.id})">수정</button>
+                        <button class="action-btn delete" onclick="deleteTodo(${todo.id})">삭제</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 시간 포맷팅
+        function formatTime(timestamp) {
+            const now = new Date();
+            const date = new Date(timestamp);
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / (1000 * 60));
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            
+            if (diffMins < 1) return '방금 전';
+            if (diffMins < 60) return `${diffMins}분 전`;
+            if (diffHours < 24) return `${diffHours}시간 전`;
+            if (diffDays < 7) return `${diffDays}일 전`;
+            
+            return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+        }
+
+        // 할일 관리 함수들
+        function addTodo() {
+            const input = document.getElementById('todoInput');
+            const priority = document.getElementById('prioritySelect');
+            
+            if (!input || !priority) return;
+            
+            const text = input.value.trim();
+            
+            if (!text) return;
+            
+            if (!todos[currentTab]) todos[currentTab] = [];
+            
+            todos[currentTab].push({
+                id: nextId++,
+                text: text,
+                completed: false,
+                priority: priority.value,
+                createdAt: Date.now()
+            });
+            
+            input.value = '';
+            hapticFeedback(document.querySelector('.add-btn'));
+            renderTabs();
+            renderTodos();
+            updateStats();
+            saveData();
+        }
+
+        function addQuickTodo(text) {
+            if (!todos[currentTab]) todos[currentTab] = [];
+            
+            todos[currentTab].push({
+                id: nextId++,
+                text: text,
+                completed: false,
+                priority: 'medium',
+                createdAt: Date.now()
+            });
+            
+            hapticFeedback(event.target);
+            renderTabs();
+            renderTodos();
+            updateStats();
+            saveData();
+        }
+
+        function toggleTodo(id) {
+            const currentTodos = todos[currentTab];
+            const todo = currentTodos.find(t => t.id === id);
+            
+            if (todo) {
+                todo.completed = !todo.completed;
+                hapticFeedback(document.querySelector(`[onclick="toggleTodo(${id})"]`));
+                renderTabs();
+                renderTodos();
+                updateStats();
+                saveData();
+            }
+        }
+
+        function editTodo(id) {
+            const todo = todos[currentTab].find(t => t.id === id);
+            if (!todo) return;
+            
+            editingTodo = id;
+            const editInput = document.getElementById('editInput');
+            const editPrioritySelect = document.getElementById('editPrioritySelect');
+            const editModal = document.getElementById('editModal');
+            
+            if (editInput) editInput.value = todo.text;
+            if (editPrioritySelect) editPrioritySelect.value = todo.priority;
+            if (editModal) editModal.classList.add('show');
+            
+            setTimeout(() => {
+                if (editInput) editInput.focus();
+            }, 300);
+        }
+
+        function confirmEditTodo() {
+            const editInput = document.getElementById('editInput');
+            const editPrioritySelect = document.getElementById('editPrioritySelect');
+            
+            if (!editInput || !editPrioritySelect) return;
+            
+            const text = editInput.value.trim();
+            const priority = editPrioritySelect.value;
+            
+            if (!text) return;
+            
+            const todo = todos[currentTab].find(t => t.id === editingTodo);
+            if (todo) {
+                todo.text = text;
+                todo.priority = priority;
+                closeEditModal();
+                renderTodos();
+                saveData();
+            }
+        }
+
+        function deleteTodo(id) {
+            todos[currentTab] = todos[currentTab].filter(t => t.id !== id);
+            renderTabs();
+            renderTodos();
+            updateStats();
+            saveData();
+        }
+
+        function filterTodos(filter) {
+            currentFilter = filter;
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            if (event && event.target) {
+                event.target.classList.add('active');
+                hapticFeedback(event.target);
+            }
+            
+            renderTodos();
+        }
+
+        // 탭 관리
+        function showAddTabModal() {
+            modalMode = 'add';
+            const modalTitle = document.getElementById('modalTitle');
+            const tabNameInput = document.getElementById('tabNameInput');
+            const tabModal = document.getElementById('tabModal');
+            
+            if (modalTitle) modalTitle.textContent = '새 카테고리';
+            if (tabNameInput) tabNameInput.value = '';
+            if (tabModal) tabModal.classList.add('show');
+            
+            setTimeout(() => {
+                if (tabNameInput) tabNameInput.focus();
+            }, 300);
+        }
+
+        function editTab(tab) {
+            modalMode = 'edit';
+            editingTab = tab;
+            const modalTitle = document.getElementById('modalTitle');
+            const tabNameInput = document.getElementById('tabNameInput');
+            const tabModal = document.getElementById('tabModal');
+            
+            if (modalTitle) modalTitle.textContent = '카테고리 수정';
+            if (tabNameInput) tabNameInput.value = tab;
+            if (tabModal) tabModal.classList.add('show');
+            
+            setTimeout(() => {
+                if (tabNameInput) tabNameInput.focus();
+            }, 300);
+        }
+
+        function deleteTab(tab) {
+            if (tabs.length <= 1) {
+                alert('최소 하나의 카테고리는 있어야 합니다.');
+                return;
+            }
+            
+            if (confirm(`'${tab}' 카테고리를 삭제하시겠습니까?`)) {
+                tabs = tabs.filter(t => t !== tab);
+                delete todos[tab];
+                
+                if (currentTab === tab) {
+                    currentTab = tabs[0];
+                }
+                
+                renderTabs();
+                renderTodos();
+                updateStats();
+                saveData();
+            }
+        }
+
+        function confirmTabAction() {
+            const tabNameInput = document.getElementById('tabNameInput');
+            if (!tabNameInput) return;
+            
+            const name = tabNameInput.value.trim();
+            
+            if (!name) {
+                alert('카테고리 이름을 입력해주세요.');
+                return;
+            }
+            
+            if (modalMode === 'add') {
+                if (tabs.includes(name)) {
+                    alert('이미 존재하는 카테고리 이름입니다.');
+                    return;
+                }
+                
+                tabs.push(name);
+                todos[name] = [];
+                currentTab = name;
+            } else if (modalMode === 'edit') {
+                if (tabs.includes(name) && name !== editingTab) {
+                    alert('이미 존재하는 카테고리 이름입니다.');
+                    return;
+                }
+                
+                const index = tabs.indexOf(editingTab);
+                tabs[index] = name;
+                todos[name] = todos[editingTab];
+                delete todos[editingTab];
+                
+                if (currentTab === editingTab) {
+                    currentTab = name;
+                }
+            }
+            
+            closeModal();
+            renderTabs();
+            renderTodos();
+            updateStats();
+            saveData();
+        }
+
+        function closeModal() {
+            const tabModal = document.getElementById('tabModal');
+            if (tabModal) tabModal.classList.remove('show');
+        }
+
+        function closeEditModal() {
+            const editModal = document.getElementById('editModal');
+            if (editModal) editModal.classList.remove('show');
+        }
+
+        // API 설정
+        function showApiModal() {
+            const apiKeyInput = document.getElementById('apiKeyInput');
+            const apiModal = document.getElementById('apiModal');
+            
+            if (apiKeyInput) apiKeyInput.value = geminiApiKey;
+            if (apiModal) apiModal.classList.add('show');
+        }
+
+        function closeApiModal() {
+            const apiModal = document.getElementById('apiModal');
+            if (apiModal) apiModal.classList.remove('show');
+        }
+
+        function saveApiSettings() {
+            const apiKeyInput = document.getElementById('apiKeyInput');
+            if (!apiKeyInput) return;
+            
+            geminiApiKey = apiKeyInput.value.trim();
+            
+            try {
+                localStorage.setItem('geminiApiSettings', JSON.stringify({
+                    apiKey: geminiApiKey
+                }));
+            } catch (e) {
+                console.log('API 설정 저장 실패:', e);
+            }
+            
+            closeApiModal();
+            addBotMessage('🐝 꿀벌이 더 똑똑해졌어요! API 설정이 완료되었습니다! ✨');
+        }
+
+        // 챗봇 기능
+        function openChatbot() {
+            const chatbotContainer = document.getElementById('chatbotContainer');
+            const chatInput = document.getElementById('chatInput');
+            
+            if (chatbotContainer) chatbotContainer.classList.add('open');
+            if (chatInput) chatInput.focus();
+        }
+
+        function closeChatbot() {
+            const chatbotContainer = document.getElementById('chatbotContainer');
+            if (chatbotContainer) chatbotContainer.classList.remove('open');
+        }
+
+        function addBotMessage(text) {
+            const messagesContainer = document.getElementById('chatMessages');
+            if (!messagesContainer) return;
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message bot';
+            messageDiv.innerHTML = text.replace(/\n/g, '<br>');
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            chatHistory.push({ type: 'bot', text: text, timestamp: Date.now() });
+            saveData();
+        }
+
+        function addUserMessage(text) {
+            const messagesContainer = document.getElementById('chatMessages');
+            if (!messagesContainer) return;
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message user';
+            messageDiv.textContent = text;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            chatHistory.push({ type: 'user', text: text, timestamp: Date.now() });
+            saveData();
+        }
+
+        function showTypingIndicator() {
+            const messagesContainer = document.getElementById('chatMessages');
+            if (!messagesContainer) return;
+            
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message loading';
+            typingDiv.id = 'typingIndicator';
+            typingDiv.innerHTML = `
+                <div class="typing-indicator">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            `;
+            messagesContainer.appendChild(typingDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            const typingIndicator = document.getElementById('typingIndicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            if (!input) return;
+            
+            const text = input.value.trim();
+            
+            if (!text) return;
+            
+            addUserMessage(text);
+            input.value = '';
+            input.style.height = 'auto';
+            
+            showTypingIndicator();
+            
+            try {
+                const response = await processMessage(text);
+                hideTypingIndicator();
+                addBotMessage(response);
+            } catch (error) {
+                hideTypingIndicator();
+                addBotMessage('🐝 죄송해요! 꿀벌이 잠시 생각이 멈췄어요. 다시 한 번 말씀해주세요! 😅');
+            }
+        }
+
+        function sendQuickMessage(text) {
+            const chatInput = document.getElementById('chatInput');
+            if (chatInput) {
+                chatInput.value = text;
+                sendMessage();
+            }
+        }
+
+        async function processMessage(message) {
+            const lowerMessage = message.toLowerCase();
+            
+            // 할일 관련 명령어 (로컬 처리)
+            if (lowerMessage.includes('할일') && lowerMessage.includes('추가')) {
+                const todoText = message.replace(/할일|추가|해줘|해주세요/g, '').trim();
+                if (todoText) {
+                    addQuickTodo(todoText);
+                    return `🐝 "${todoText}" 할일을 꿀벌이 추가했어요! ✅`;
+                }
+                return '🐝 어떤 할일을 추가하시겠어요? 꿀벌이 도와드릴게요!';
+            }
+            
+            if (lowerMessage.includes('할일') && (lowerMessage.includes('목록') || lowerMessage.includes('리스트'))) {
+                const currentTodos = todos[currentTab] || [];
+                const pendingTodos = currentTodos.filter(t => !t.completed);
+                
+                if (pendingTodos.length === 0) {
+                    return `🐝 ${currentTab}에 미완료 할일이 없어요! 대단해요! 🎉`;
+                }
+                
+                const todoList = pendingTodos.map((t, i) => `${i + 1}. ${t.text}`).join('\n');
+                return `🐝 ${currentTab}의 미완료 할일이에요:\n\n${todoList}\n\n꿀벌이 응원할게요! 화이팅! 💪`;
+            }
+            
+            // 통계 정보 (로컬 처리)
+            if (lowerMessage.includes('통계') || lowerMessage.includes('진행률')) {
+                const allTodos = Object.values(todos).flat();
+                const total = allTodos.length;
+                const completed = allTodos.filter(t => t.completed).length;
+                const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+                
+                return `🐝 꿀벌이 분석한 할일 통계예요!\n\n📊 총 할일: ${total}개\n✅ 완료: ${completed}개\n📈 진행률: ${progress}%\n\n${progress >= 80 ? '정말 훌륭해요! 꿀벌도 부러워해요! 🎉' : progress >= 50 ? '절반 이상 완료! 꿀벌이 응원해요! 🐝💪' : '조금씩 차근차근 해봐요! 꿀벌이 함께할게요! 😊'}`;
+            }
+            
+            // Gemini AI로 처리
             if (geminiApiKey && geminiApiKey !== 'AIzaSyACAoKxi4NsWm-zstIVpXLTh4apZmGz7Z0') {
                 try {
                     const response = await callGeminiAI(message);
@@ -229,7 +1014,7 @@
         // 키보드 단축키
         document.addEventListener('keydown', function(e) {
             if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                if (document.activeElement.id === 'todoInput') {
+                if (document.activeElement && document.activeElement.id === 'todoInput') {
                     addTodo();
                 }
             }
@@ -245,7 +1030,7 @@
             if ((e.ctrlKey || e.metaKey) && e.key === '/') {
                 e.preventDefault();
                 const chatbot = document.getElementById('chatbotContainer');
-                if (chatbot.classList.contains('open')) {
+                if (chatbot && chatbot.classList.contains('open')) {
                     closeChatbot();
                 } else {
                     openChatbot();
@@ -320,750 +1105,12 @@
         init();
     </script>
 </body>
-</html>">0%</div>
-                        <div class="stat-label">진행률</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="main-content">
-                <div class="section">
-                    <div class="section-title">카테고리</div>
-                    <div class="tabs-container">
-                        <div class="tab-list" id="tabList"></div>
-                        <button class="add-tab-btn" onclick="showAddTabModal()">+ 새 카테고리</button>
-                        
-                        <div class="filter-container">
-                            <button class="filter-btn active" onclick="filterTodos('all')">전체</button>
-                            <button class="filter-btn" onclick="filterTodos('pending')">진행중</button>
-                            <button class="filter-btn" onclick="filterTodos('completed')">완료</button>
-                            <button class="filter-btn" onclick="filterTodos('high')">🔴 중요</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="section">
-                    <div class="section-title">새 할일</div>
-                    <div class="input-container">
-                        <div class="input-row">
-                            <input type="text" class="todo-input" id="todoInput" placeholder="할일을 입력하세요">
-                            <button class="add-btn" onclick="addTodo()">추가</button>
-                        </div>
-                        <select class="priority-select" id="prioritySelect">
-                            <option value="low">🟢 낮은 우선순위</option>
-                            <option value="medium" selected>🟡 보통 우선순위</option>
-                            <option value="high">🔴 높은 우선순위</option>
-                        </select>
-                        
-                        <div class="quick-actions">
-                            <button class="quick-action-btn" onclick="addQuickTodo('쇼핑하기')">🛒 쇼핑</button>
-                            <button class="quick-action-btn" onclick="addQuickTodo('운동하기')">🏃‍♀️ 운동</button>
-                            <button class="quick-action-btn" onclick="addQuickTodo('청소하기')">🧹 청소</button>
-                            <button class="quick-action-btn" onclick="addQuickTodo('요리하기')">🍳 요리</button>
-                            <button class="quick-action-btn" onclick="showSmartSuggestion()">🐝 AI추천</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="section">
-                    <div class="section-title" id="listTitle">모든 할일</div>
-                    <div class="todo-list-container">
-                        <div id="todoList"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 챗봇 컨테이너 -->
-        <div class="chatbot-container" id="chatbotContainer">
-            <div class="chatbot-header">
-                <div class="chatbot-title">🐝 꿀벌</div>
-                <button class="close-chatbot" onclick="closeChatbot()">×</button>
-            </div>
-            
-            <div class="chatbot-messages" id="chatMessages">
-                <div class="message bot">
-                    안녕하세요! 저는 꿀벌이에요! 🐝✨<br>
-                    부부 할일관리와 일상의 모든 질문에 답해드릴게요!<br><br>
-                    저는 Google Gemini 1.5 Flash로 구동되는 똑똑한 AI랍니다!
-                    
-                    <div class="quick-actions" style="margin-top: 12px;">
-                        <button class="quick-action-btn" onclick="sendQuickMessage('오늘 날씨 어때?')">🌤️ 날씨</button>
-                        <button class="quick-action-btn" onclick="sendQuickMessage('부부 데이트 추천해줘')">💑 데이트</button>
-                        <button class="quick-action-btn" onclick="sendQuickMessage('건강한 요리 레시피 알려줘')">🍳 요리</button>
-                        <button class="quick-action-btn" onclick="sendQuickMessage('할일 추천해줘')">✅ 할일</button>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="chatbot-input-container">
-                <div class="chatbot-input-row">
-                    <textarea class="chatbot-input" id="chatInput" placeholder="꿀벌에게 궁금한 것을 물어보세요..." rows="1"></textarea>
-                    <button class="chatbot-send" id="chatSend" onclick="sendMessage()">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="m22 2-7 20-4-9-9-4z"/>
-                            <path d="M22 2 11 13"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 플로팅 챗봇 버튼 -->
-    <button class="floating-chat-btn" onclick="openChatbot()">
-        🐝
-    </button>
-
-    <!-- 모달들 -->
-    <div class="modal" id="tabModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title" id="modalTitle">새 카테고리</div>
-                <input type="text" class="modal-input" id="tabNameInput" placeholder="카테고리 이름">
-            </div>
-            <div class="modal-actions">
-                <button class="modal-btn secondary" onclick="closeModal()">취소</button>
-                <button class="modal-btn primary" onclick="confirmTabAction()">추가</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal" id="editModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">할일 수정</div>
-                <input type="text" class="modal-input" id="editInput" placeholder="할일 내용">
-                <select class="priority-select" id="editPrioritySelect" style="margin-bottom: 20px; width: 100%;">
-                    <option value="low">🟢 낮은 우선순위</option>
-                    <option value="medium">🟡 보통 우선순위</option>
-                    <option value="high">🔴 높은 우선순위</option>
-                </select>
-            </div>
-            <div class="modal-actions">
-                <button class="modal-btn secondary" onclick="closeEditModal()">취소</button>
-                <button class="modal-btn primary" onclick="confirmEditTodo()">저장</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- API 키 설정 모달 -->
-    <div class="modal" id="apiModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">🐝 꿀벌 AI 설정</div>
-                <input type="text" class="modal-input" id="apiKeyInput" placeholder="Google Gemini API 키">
-                <p style="font-size: 14px; color: var(--ios-text-secondary); margin-top: 8px;">
-                    Google AI Studio에서 Gemini API 키를 받아서 입력하세요.<br>
-                    <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: var(--ios-blue);">
-                        🔗 API 키 받으러 가기
-                    </a>
-                </p>
-            </div>
-            <div class="modal-actions">
-                <button class="modal-btn secondary" onclick="closeApiModal()">취소</button>
-                <button class="modal-btn primary" onclick="saveApiSettings()">저장</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // 전역 변수
-        let tabs = ['💼 업무', '🏠 집안일', '🛒 쇼핑', '💑 데이트'];
-        let currentTab = '💼 업무';
-        let todos = {
-            '💼 업무': [
-                { id: 1, text: '회의 준비하기', completed: false, priority: 'high', createdAt: Date.now() },
-                { id: 2, text: '이메일 확인', completed: true, priority: 'medium', createdAt: Date.now() }
-            ],
-            '🏠 집안일': [
-                { id: 3, text: '설거지하기', completed: false, priority: 'medium', createdAt: Date.now() },
-                { id: 4, text: '빨래 널기', completed: true, priority: 'low', createdAt: Date.now() }
-            ],
-            '🛒 쇼핑': [
-                { id: 5, text: '우유와 달걀 사기', completed: false, priority: 'high', createdAt: Date.now() }
-            ],
-            '💑 데이트': []
-        };
-        let nextId = 6;
-        let modalMode = 'add';
-        let editingTab = null;
-        let editingTodo = null;
-        let currentFilter = 'all';
-        let chatHistory = [];
-        let geminiApiKey = 'AIzaSyACAoKxi4NsWm-zstIVpXLTh4apZmGz7Z0'; // Gemini API 키
-
-        // 시간 업데이트
-        function updateTime() {
-            const now = new Date();
-            const time = now.toLocaleTimeString('ko-KR', {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false
-            });
-            document.getElementById('currentTime').textContent = time;
-        }
-
-        // 햅틱 피드백
-        function hapticFeedback(element) {
-            if (element) {
-                element.classList.add('haptic');
-                setTimeout(() => element.classList.remove('haptic'), 100);
-            }
-        }
-
-        // 초기화
-        function init() {
-            loadData();
-            loadApiSettings();
-            updateTime();
-            setInterval(updateTime, 1000);
-            renderTabs();
-            renderTodos();
-            updateStats();
-            setupEventListeners();
-            setupChatInput();
-        }
-
-        // 데이터 로드
-        function loadData() {
-            const saved = localStorage.getItem('iosTodoApp');
-            if (saved) {
-                const data = JSON.parse(saved);
-                tabs = data.tabs || tabs;
-                currentTab = data.currentTab || tabs[0];
-                todos = data.todos || todos;
-                nextId = data.nextId || nextId;
-                chatHistory = data.chatHistory || [];
-            }
-        }
-
-        // API 설정 로드
-        function loadApiSettings() {
-            const settings = localStorage.getItem('geminiApiSettings');
-            if (settings) {
-                const parsed = JSON.parse(settings);
-                geminiApiKey = parsed.apiKey || geminiApiKey;
-            }
-        }
-
-        // 데이터 저장
-        function saveData() {
-            localStorage.setItem('iosTodoApp', JSON.stringify({
-                tabs, currentTab, todos, nextId, chatHistory
-            }));
-        }
-
-        // 이벤트 리스너 설정
-        function setupEventListeners() {
-            document.getElementById('todoInput').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    addTodo();
-                }
-            });
-
-            document.getElementById('tabNameInput').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    confirmTabAction();
-                }
-            });
-
-            document.getElementById('editInput').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    confirmEditTodo();
-                }
-            });
-
-            ['tabModal', 'editModal', 'apiModal'].forEach(modalId => {
-                document.getElementById(modalId).addEventListener('click', function(e) {
-                    if (e.target === this) {
-                        this.classList.remove('show');
-                    }
-                });
-            });
-        }
-
-        // 챗 입력 설정
-        function setupChatInput() {
-            const chatInput = document.getElementById('chatInput');
-            const chatSend = document.getElementById('chatSend');
-
-            chatInput.addEventListener('input', function() {
-                this.style.height = 'auto';
-                this.style.height = Math.min(this.scrollHeight, 100) + 'px';
-                
-                chatSend.disabled = !this.value.trim();
-            });
-
-            chatInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage();
-                }
-            });
-        }
-
-        // 통계 업데이트
-        function updateStats() {
-            const allTodos = Object.values(todos).flat();
-            const total = allTodos.length;
-            const completed = allTodos.filter(t => t.completed).length;
-            const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
-            
-            document.getElementById('totalTasks').textContent = total;
-            document.getElementById('completedTasks').textContent = completed;
-            document.getElementById('progressPercent').textContent = progress + '%';
-        }
-
-        // 탭 렌더링
-        function renderTabs() {
-            const tabList = document.getElementById('tabList');
-            tabList.innerHTML = '';
-            
-            tabs.forEach(tab => {
-                const tabElement = document.createElement('button');
-                tabElement.className = `tab ${tab === currentTab ? 'active' : ''}`;
-                
-                const count = (todos[tab] || []).filter(t => !t.completed).length;
-                
-                tabElement.innerHTML = `
-                    ${tab}
-                    ${count > 0 ? `<span class="tab-count">${count}</span>` : ''}
-                    ${tabs.length > 1 ? `<span class="tab-close" onclick="event.stopPropagation(); deleteTab('${tab}')">&times;</span>` : ''}
-                `;
-                
-                tabElement.onclick = () => {
-                    hapticFeedback(tabElement);
-                    switchTab(tab);
-                };
-                
-                tabElement.ondblclick = () => editTab(tab);
-                tabList.appendChild(tabElement);
-            });
-        }
-
-        // 탭 전환
-        function switchTab(tab) {
-            currentTab = tab;
-            renderTabs();
-            renderTodos();
-            updateStats();
-            saveData();
-            document.getElementById('listTitle').textContent = `${tab} 할일`;
-        }
-
-        // 할일 렌더링
-        function renderTodos() {
-            const todoList = document.getElementById('todoList');
-            const currentTodos = todos[currentTab] || [];
-            
-            let filteredTodos = currentTodos;
-            
-            if (currentFilter === 'pending') {
-                filteredTodos = currentTodos.filter(t => !t.completed);
-            } else if (currentFilter === 'completed') {
-                filteredTodos = currentTodos.filter(t => t.completed);
-            } else if (currentFilter === 'high') {
-                filteredTodos = currentTodos.filter(t => t.priority === 'high');
-            }
-            
-            if (filteredTodos.length === 0) {
-                todoList.innerHTML = `
-                    <div class="empty-state">
-                        <span class="emoji">📝</span>
-                        <h3>할일이 없습니다</h3>
-                        <p>새로운 할일을 추가해보세요!</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            todoList.innerHTML = filteredTodos.map(todo => `
-                <div class="todo-item ${todo.completed ? 'completed' : ''} slide-in">
-                    <div class="todo-checkbox ${todo.completed ? 'checked' : ''}" 
-                         onclick="toggleTodo(${todo.id})"></div>
-                    <div class="todo-content">
-                        <div class="todo-text">${todo.text}</div>
-                        <div class="todo-meta">
-                            <span class="priority-badge priority-${todo.priority}"></span>
-                            <span>${formatTime(todo.createdAt)}</span>
-                        </div>
-                    </div>
-                    <div class="todo-actions">
-                        <button class="action-btn edit" onclick="editTodo(${todo.id})">수정</button>
-                        <button class="action-btn delete" onclick="deleteTodo(${todo.id})">삭제</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // 시간 포맷팅
-        function formatTime(timestamp) {
-            const now = new Date();
-            const date = new Date(timestamp);
-            const diffMs = now - date;
-            const diffMins = Math.floor(diffMs / (1000 * 60));
-            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-            
-            if (diffMins < 1) return '방금 전';
-            if (diffMins < 60) return `${diffMins}분 전`;
-            if (diffHours < 24) return `${diffHours}시간 전`;
-            if (diffDays < 7) return `${diffDays}일 전`;
-            
-            return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
-        }
-
-        // 할일 관리 함수들
-        function addTodo() {
-            const input = document.getElementById('todoInput');
-            const priority = document.getElementById('prioritySelect').value;
-            const text = input.value.trim();
-            
-            if (!text) return;
-            
-            if (!todos[currentTab]) todos[currentTab] = [];
-            
-            todos[currentTab].push({
-                id: nextId++,
-                text: text,
-                completed: false,
-                priority: priority,
-                createdAt: Date.now()
-            });
-            
-            input.value = '';
-            hapticFeedback(document.querySelector('.add-btn'));
-            renderTabs();
-            renderTodos();
-            updateStats();
-            saveData();
-        }
-
-        function addQuickTodo(text) {
-            if (!todos[currentTab]) todos[currentTab] = [];
-            
-            todos[currentTab].push({
-                id: nextId++,
-                text: text,
-                completed: false,
-                priority: 'medium',
-                createdAt: Date.now()
-            });
-            
-            hapticFeedback(event.target);
-            renderTabs();
-            renderTodos();
-            updateStats();
-            saveData();
-        }
-
-        function toggleTodo(id) {
-            const currentTodos = todos[currentTab];
-            const todo = currentTodos.find(t => t.id === id);
-            
-            if (todo) {
-                todo.completed = !todo.completed;
-                hapticFeedback(document.querySelector(`[onclick="toggleTodo(${id})"]`));
-                renderTabs();
-                renderTodos();
-                updateStats();
-                saveData();
-            }
-        }
-
-        function editTodo(id) {
-            const todo = todos[currentTab].find(t => t.id === id);
-            if (!todo) return;
-            
-            editingTodo = id;
-            document.getElementById('editInput').value = todo.text;
-            document.getElementById('editPrioritySelect').value = todo.priority;
-            document.getElementById('editModal').classList.add('show');
-            
-            setTimeout(() => {
-                document.getElementById('editInput').focus();
-            }, 300);
-        }
-
-        function confirmEditTodo() {
-            const text = document.getElementById('editInput').value.trim();
-            const priority = document.getElementById('editPrioritySelect').value;
-            
-            if (!text) return;
-            
-            const todo = todos[currentTab].find(t => t.id === editingTodo);
-            if (todo) {
-                todo.text = text;
-                todo.priority = priority;
-                closeEditModal();
-                renderTodos();
-                saveData();
-            }
-        }
-
-        function deleteTodo(id) {
-            todos[currentTab] = todos[currentTab].filter(t => t.id !== id);
-            renderTabs();
-            renderTodos();
-            updateStats();
-            saveData();
-        }
-
-        function filterTodos(filter) {
-            currentFilter = filter;
-            
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            hapticFeedback(event.target);
-            renderTodos();
-        }
-
-        // 탭 관리
-        function showAddTabModal() {
-            modalMode = 'add';
-            document.getElementById('modalTitle').textContent = '새 카테고리';
-            document.getElementById('tabNameInput').value = '';
-            document.getElementById('tabModal').classList.add('show');
-            
-            setTimeout(() => {
-                document.getElementById('tabNameInput').focus();
-            }, 300);
-        }
-
-        function editTab(tab) {
-            modalMode = 'edit';
-            editingTab = tab;
-            document.getElementById('modalTitle').textContent = '카테고리 수정';
-            document.getElementById('tabNameInput').value = tab;
-            document.getElementById('tabModal').classList.add('show');
-            
-            setTimeout(() => {
-                document.getElementById('tabNameInput').focus();
-            }, 300);
-        }
-
-        function deleteTab(tab) {
-            if (tabs.length <= 1) {
-                alert('최소 하나의 카테고리는 있어야 합니다.');
-                return;
-            }
-            
-            if (confirm(`'${tab}' 카테고리를 삭제하시겠습니까?`)) {
-                tabs = tabs.filter(t => t !== tab);
-                delete todos[tab];
-                
-                if (currentTab === tab) {
-                    currentTab = tabs[0];
-                }
-                
-                renderTabs();
-                renderTodos();
-                updateStats();
-                saveData();
-            }
-        }
-
-        function confirmTabAction() {
-            const name = document.getElementById('tabNameInput').value.trim();
-            
-            if (!name) {
-                alert('카테고리 이름을 입력해주세요.');
-                return;
-            }
-            
-            if (modalMode === 'add') {
-                if (tabs.includes(name)) {
-                    alert('이미 존재하는 카테고리 이름입니다.');
-                    return;
-                }
-                
-                tabs.push(name);
-                todos[name] = [];
-                currentTab = name;
-            } else if (modalMode === 'edit') {
-                if (tabs.includes(name) && name !== editingTab) {
-                    alert('이미 존재하는 카테고리 이름입니다.');
-                    return;
-                }
-                
-                const index = tabs.indexOf(editingTab);
-                tabs[index] = name;
-                todos[name] = todos[editingTab];
-                delete todos[editingTab];
-                
-                if (currentTab === editingTab) {
-                    currentTab = name;
-                }
-            }
-            
-            closeModal();
-            renderTabs();
-            renderTodos();
-            updateStats();
-            saveData();
-        }
-
-        function closeModal() {
-            document.getElementById('tabModal').classList.remove('show');
-        }
-
-        function closeEditModal() {
-            document.getElementById('editModal').classList.remove('show');
-        }
-
-        // API 설정
-        function showApiModal() {
-            document.getElementById('apiKeyInput').value = geminiApiKey;
-            document.getElementById('apiModal').classList.add('show');
-        }
-
-        function closeApiModal() {
-            document.getElementById('apiModal').classList.remove('show');
-        }
-
-        function saveApiSettings() {
-            geminiApiKey = document.getElementById('apiKeyInput').value.trim();
-            
-            localStorage.setItem('geminiApiSettings', JSON.stringify({
-                apiKey: geminiApiKey
-            }));
-            
-            closeApiModal();
-            addBotMessage('🐝 꿀벌이 더 똑똑해졌어요! API 설정이 완료되었습니다! ✨');
-        }
-
-        // 챗봇 기능
-        function openChatbot() {
-            document.getElementById('chatbotContainer').classList.add('open');
-            document.getElementById('chatInput').focus();
-        }
-
-        function closeChatbot() {
-            document.getElementById('chatbotContainer').classList.remove('open');
-        }
-
-        function addBotMessage(text) {
-            const messagesContainer = document.getElementById('chatMessages');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message bot';
-            messageDiv.innerHTML = text.replace(/\n/g, '<br>');
-            messagesContainer.appendChild(messageDiv);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            
-            chatHistory.push({ type: 'bot', text: text, timestamp: Date.now() });
-            saveData();
-        }
-
-        function addUserMessage(text) {
-            const messagesContainer = document.getElementById('chatMessages');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message user';
-            messageDiv.textContent = text;
-            messagesContainer.appendChild(messageDiv);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            
-            chatHistory.push({ type: 'user', text: text, timestamp: Date.now() });
-            saveData();
-        }
-
-        function showTypingIndicator() {
-            const messagesContainer = document.getElementById('chatMessages');
-            const typingDiv = document.createElement('div');
-            typingDiv.className = 'message loading';
-            typingDiv.id = 'typingIndicator';
-            typingDiv.innerHTML = `
-                <div class="typing-indicator">
-                    <div class="typing-dot"></div>
-                    <div class="typing-dot"></div>
-                    <div class="typing-dot"></div>
-                </div>
-            `;
-            messagesContainer.appendChild(typingDiv);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
-
-        function hideTypingIndicator() {
-            const typingIndicator = document.getElementById('typingIndicator');
-            if (typingIndicator) {
-                typingIndicator.remove();
-            }
-        }
-
-        async function sendMessage() {
-            const input = document.getElementById('chatInput');
-            const text = input.value.trim();
-            
-            if (!text) return;
-            
-            addUserMessage(text);
-            input.value = '';
-            input.style.height = 'auto';
-            
-            showTypingIndicator();
-            
-            try {
-                const response = await processMessage(text);
-                hideTypingIndicator();
-                addBotMessage(response);
-            } catch (error) {
-                hideTypingIndicator();
-                addBotMessage('🐝 죄송해요! 꿀벌이 잠시 생각이 멈췄어요. 다시 한 번 말씀해주세요! 😅');
-            }
-        }
-
-        function sendQuickMessage(text) {
-            document.getElementById('chatInput').value = text;
-            sendMessage();
-        }
-
-        async function processMessage(message) {
-            const lowerMessage = message.toLowerCase();
-            
-            // 할일 관련 명령어 (로컬 처리)
-            if (lowerMessage.includes('할일') && lowerMessage.includes('추가')) {
-                const todoText = message.replace(/할일|추가|해줘|해주세요/g, '').trim();
-                if (todoText) {
-                    addQuickTodo(todoText);
-                    return `🐝 "${todoText}" 할일을 꿀벌이 추가했어요! ✅`;
-                }
-                return '🐝 어떤 할일을 추가하시겠어요? 꿀벌이 도와드릴게요!';
-            }
-            
-            if (lowerMessage.includes('할일') && (lowerMessage.includes('목록') || lowerMessage.includes('리스트'))) {
-                const currentTodos = todos[currentTab] || [];
-                const pendingTodos = currentTodos.filter(t => !t.completed);
-                
-                if (pendingTodos.length === 0) {
-                    return `🐝 ${currentTab}에 미완료 할일이 없어요! 대단해요! 🎉`;
-                }
-                
-                const todoList = pendingTodos.map((t, i) => `${i + 1}. ${t.text}`).join('\n');
-                return `🐝 ${currentTab}의 미완료 할일이에요:\n\n${todoList}\n\n꿀벌이 응원할게요! 화이팅! 💪`;
-            }
-            
-            // 통계 정보 (로컬 처리)
-            if (lowerMessage.includes('통계') || lowerMessage.includes('진행률')) {
-                const allTodos = Object.values(todos).flat();
-                const total = allTodos.length;
-                const completed = allTodos.filter(t => t.completed).length;
-                const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
-                
-                return `🐝 꿀벌이 분석한 할일 통계예요!\n\n📊 총 할일: ${total}개\n✅ 완료: ${completed}개\n📈 진행률: ${progress}%\n\n${progress >= 80 ? '정말 훌륭해요! 꿀벌도 부러워해요! 🎉' : progress >= 50 ? '절반 이상 완료! 꿀벌이 응원해요! 🐝💪' : '조금씩 차근차근 해봐요! 꿀벌이 함께할게요! 😊'}`;
-            }
-            
-            // Gemini AI로 처리
-            if (geminiApiKey &&<!DOCTYPE html>
+</html><!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>부부 할일관리 with 꿀벌</title>
-    <link rel="manifest" href="manifest.json">
     <style>
         * {
             margin: 0;
@@ -1093,22 +1140,14 @@
             --ios-shadow-large: 0 10px 30px rgba(0, 0, 0, 0.15);
         }
 
-        @supports (-webkit-backdrop-filter: blur(20px)) or (backdrop-filter: blur(20px)) {
-            :root {
-                --ios-card-bg: rgba(255, 255, 255, 0.7);
-            }
-        }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
             background: linear-gradient(145deg, #F2F1F6 0%, #E5E5EA 100%);
             min-height: 100vh;
             color: var(--ios-text-primary);
             -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
             font-size: 17px;
             line-height: 1.47;
-            overflow-x: hidden;
         }
 
         .app-container {
@@ -1121,7 +1160,6 @@
             height: 44px;
             background: var(--ios-card-bg);
             backdrop-filter: var(--ios-blur);
-            -webkit-backdrop-filter: var(--ios-blur);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1142,7 +1180,6 @@
             text-align: center;
             background: var(--ios-card-bg);
             backdrop-filter: var(--ios-blur);
-            -webkit-backdrop-filter: var(--ios-blur);
             position: relative;
         }
 
@@ -1182,7 +1219,6 @@
             padding: 0 20px 20px 20px;
             background: var(--ios-card-bg);
             backdrop-filter: var(--ios-blur);
-            -webkit-backdrop-filter: var(--ios-blur);
         }
 
         .stats-grid {
@@ -1198,7 +1234,7 @@
             box-shadow: var(--ios-shadow);
             border: 0.5px solid var(--ios-gray-2);
             text-align: center;
-            transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transition: all 0.2s ease;
         }
 
         .stat-card:active {
@@ -1260,7 +1296,7 @@
             font-weight: 500;
             color: var(--ios-text-primary);
             cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transition: all 0.2s ease;
             position: relative;
             display: flex;
             align-items: center;
@@ -1321,7 +1357,7 @@
             font-weight: 500;
             color: var(--ios-blue);
             cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transition: all 0.2s ease;
         }
 
         .add-tab-btn:active {
@@ -1375,11 +1411,6 @@
             color: var(--ios-text-primary);
             cursor: pointer;
             appearance: none;
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
-            background-position: right 12px center;
-            background-repeat: no-repeat;
-            background-size: 16px;
-            padding-right: 40px;
             min-width: 180px;
         }
 
@@ -1392,7 +1423,7 @@
             font-weight: 600;
             color: white;
             cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transition: all 0.2s ease;
             box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
             white-space: nowrap;
         }
@@ -1420,7 +1451,7 @@
             color: var(--ios-text-secondary);
             cursor: pointer;
             white-space: nowrap;
-            transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transition: all 0.2s ease;
         }
 
         .filter-btn:active {
@@ -1540,7 +1571,7 @@
             font-weight: 500;
             color: var(--ios-text-secondary);
             cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transition: all 0.2s ease;
         }
 
         .action-btn:active {
@@ -1594,7 +1625,7 @@
             width: 100%;
             z-index: 1000;
             transform: translateY(100%);
-            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transition: transform 0.4s ease;
         }
 
         .chatbot-container.open {
@@ -1609,7 +1640,6 @@
             justify-content: space-between;
             background: var(--ios-card-bg);
             backdrop-filter: var(--ios-blur);
-            -webkit-backdrop-filter: var(--ios-blur);
         }
 
         .chatbot-title {
@@ -1715,7 +1745,6 @@
             border-top: 0.5px solid var(--ios-gray-2);
             background: var(--ios-card-bg);
             backdrop-filter: var(--ios-blur);
-            -webkit-backdrop-filter: var(--ios-blur);
         }
 
         .chatbot-input-row {
@@ -1756,7 +1785,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transition: all 0.2s ease;
             flex-shrink: 0;
         }
 
@@ -1784,7 +1813,7 @@
             font-size: 28px;
             cursor: pointer;
             box-shadow: 0 8px 25px rgba(0, 122, 255, 0.4);
-            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transition: all 0.3s ease;
             z-index: 999;
         }
 
@@ -1805,12 +1834,11 @@
             z-index: 1000;
             padding: 20px;
             backdrop-filter: var(--ios-blur);
-            -webkit-backdrop-filter: var(--ios-blur);
         }
 
         .modal.show {
             display: flex;
-            animation: modalFadeIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            animation: modalFadeIn 0.3s ease;
         }
 
         .modal-content {
@@ -1819,7 +1847,7 @@
             width: 100%;
             max-width: 320px;
             box-shadow: var(--ios-shadow-large);
-            animation: modalSlideUp 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            animation: modalSlideUp 0.3s ease;
         }
 
         .modal-header {
@@ -1927,7 +1955,6 @@
             
             .todo-item {
                 padding: 18px 20px;
-                touch-action: pan-y;
             }
             
             .tab {
@@ -1988,7 +2015,7 @@
         }
 
         .slide-in {
-            animation: slideIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            animation: slideIn 0.3s ease;
         }
 
         .haptic {
@@ -2003,27 +2030,64 @@
 </head>
 <body>
     <div class="app-container">
-        <!-- 메인 앱 -->
-        <div class="main-app">
-            <div class="status-bar">
-                <div class="time" id="currentTime">9:41</div>
+        <div class="status-bar">
+            <div class="time" id="currentTime">9:41</div>
+        </div>
+
+        <div class="header">
+            <h1>💑 할일</h1>
+            <p class="subtitle">🐝 꿀벌과 함께하는 스마트한 하루</p>
+            <button class="settings-btn" onclick="showApiModal()">⚙️ 꿀벌 설정</button>
+        </div>
+
+        <div class="stats-container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalTasks">0</div>
+                    <div class="stat-label">총 할일</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="completedTasks">0</div>
+                    <div class="stat-label">완료</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="progressPercent">0%</div>
+                    <div class="stat-label">진행률</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="section">
+                <div class="section-title">카테고리</div>
+                <div class="tabs-container">
+                    <div class="tab-list" id="tabList"></div>
+                    <button class="add-tab-btn" onclick="showAddTabModal()">+ 새 카테고리</button>
+                    
+                    <div class="filter-container">
+                        <button class="filter-btn active" onclick="filterTodos('all')">전체</button>
+                        <button class="filter-btn" onclick="filterTodos('pending')">진행중</button>
+                        <button class="filter-btn" onclick="filterTodos('completed')">완료</button>
+                        <button class="filter-btn" onclick="filterTodos('high')">🔴 중요</button>
+                    </div>
+                </div>
             </div>
 
-            <div class="header">
-                <h1>💑 할일</h1>
-                <p class="subtitle">🐝 꿀벌과 함께하는 스마트한 하루</p>
-                <button class="settings-btn" onclick="showApiModal()">⚙️ 꿀벌 설정</button>
-            </div>
-
-            <div class="stats-container">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-number" id="totalTasks">0</div>
-                        <div class="stat-label">총 할일</div>
+            <div class="section">
+                <div class="section-title">새 할일</div>
+                <div class="input-container">
+                    <div class="input-row">
+                        <input type="text" class="todo-input" id="todoInput" placeholder="할일을 입력하세요">
+                        <button class="add-btn" onclick="addTodo()">추가</button>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="completedTasks">0</div>
-                        <div class="stat-label">완료</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="progressPercent
+                    <select class="priority-select" id="prioritySelect">
+                        <option value="low">🟢 낮은 우선순위</option>
+                        <option value="medium" selected>🟡 보통 우선순위</option>
+                        <option value="high">🔴 높은 우선순위</option>
+                    </select>
+                    
+                    <div class="quick-actions">
+                        <button class="quick-action-btn" onclick="addQuickTodo('쇼핑하기')">🛒 쇼핑</button>
+                        <button class="quick-action-btn" onclick="addQuickTodo('운동하기')">🏃‍♀️ 운동</button>
+                        <button class="quick-action-btn" onclick="addQuickTodo('청소하기')">🧹 청소</button>
+                        <button class="quick-action-btn" onclick="addQuickTodo('요리하기')">🍳 요리</button
