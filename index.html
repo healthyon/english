@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>꿀둥스 - 부부 할일관리</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#FFB800">
+    <meta name="description" content="부부가 서로의 할일을 쉽게 관리할 수 있는 PWA 앱">
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoi6L+A65Ox7Iqk4oCUIOu2gOu2gCDtlaDsnbzqtIDrpqwiLCJzaG9ydF9uYW1lIjoi6L+A65Ox7IqkIiwic3RhcnRfdXJsIjoiLyIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwidGhlbWVfY29sb3IiOiIjRkZCODAwIiwiYmFja2dyb3VuZF9jb2xvciI6IiNGRkY4RjAiLCJpY29ucyI6W3sic3JjIjoiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCNGJXeHVjejBpYUhSMGNEb3ZMM2QzZHk1M00zTXViM0puTHpJd01EQXZjM1puSWlCM2FXUjBhRDBpTVRJNElpQm9aV2xuYUhROUlqRXlPQ0krUEdOcGNtTnNaU0JqZUQwaU5qUWlJR041UFNJMk5DSWlJSEk5SWpVd0lpQm1hV3hzUFNJalJrWkNPREF3SWk4K1BHTjViR2x1WkdWeUlHUjRQU0kyTkNJZ1pIazlJalUySWlCb1pXbG5hSFE5SWpJd0lpQm1hV3hzUFNJalJrWkRPREF3SWk4K1BHTjViR2x1WkdWeUlHUjRQU0kyTkNJZ1pIazlJamN5SWlCb1pXbG5hSFE5SWpJd0lpQm1hV3hzUFNJalJrWkRPREF3SWk4K1BHVnNiR2x3YzJVZ1kzZzlJalkwSWlCamVUMGlOemdpSUhKNFBTSXhNQ0lnY25rOUlqSXdJaUJtYVd4c1BTSWpSa1pET0RBd0lpOCtQSEJoZEdnaVpEMGliVGd5TGpReUlEZ3lMalF5TFRBdU16VXVORFl0TUM0M09TMHVOVEV0TUM0NU9TMHVNell0TUM0MU9TMHVNell0TUM0ME5pNHdOaTR6TlMwdU5EWXVNRFP0YVdWallRWGJKdGYlnaiOOIiwidHlwZSI6ImltYWdlL3N2Zyt4bWwiLCJzaXplcyI6IjEyOHgxMjgifV19">
+    
+    <!-- iOS PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="꿀둥스">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #FFF8F0 0%, #FFF0E6 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            animation: slideDown 0.6s ease-out;
+        }
+        
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .bee-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(45deg, #FFB800, #FFA000);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 15px rgba(255, 184, 0, 0.3);
+            animation: bounce 2s infinite;
+        }
+        
+        .app-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #FF8F00;
+            text-shadow: 0 2px 4px rgba(255, 143, 0, 0.2);
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        .tab-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+        
+        .tab {
+            background: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            white-space: nowrap;
+            min-width: 80px;
+        }
+        
+        .tab.active {
+            background: linear-gradient(45deg, #FFB800, #FFA000);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 184, 0, 0.3);
+        }
+        
+        .tab:hover:not(.active) {
+            background: #f8f8f8;
+            transform: translateY(-1px);
+        }
+        
+        .add-todo-section {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            animation: slideUp 0.6s ease-out;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .todo-input {
+            padding: 15px 20px;
+            border: 2px solid #f0f0f0;
+            border-radius: 15px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+        
+        .todo-input:focus {
+            outline: none;
+            border-color: #FFB800;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(255, 184, 0, 0.1);
+        }
+        
+        .date-input-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .date-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #f0f0f0;
+            border-radius: 12px;
+            font-size: 14px;
+            background: #fafafa;
+        }
+        
+        .calendar-btn {
+            padding: 12px;
+            background: linear-gradient(45deg, #FFB800, #FFA000);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            transition: transform 0.2s ease;
+        }
+        
+        .calendar-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .add-btn {
+            padding: 15px 25px;
+            background: linear-gradient(45deg, #FFB800, #FFA000);
+            border: none;
+            border-radius: 15px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 184, 0, 0.3);
+        }
+        
+        .add-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 184, 0, 0.4);
+        }
+        
+        .todo-list {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 100px;
+        }
+        
+        .todo-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+            animation: slideIn 0.4s ease-out;
+        }
+        
+        .todo-item:hover {
+            background: #f0f8ff;
+            transform: translateX(5px);
+        }
+        
+        .todo-checkbox {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #FFB800;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .todo-checkbox.completed {
+            background: #FFB800;
+            position: relative;
+        }
+        
+        .todo-checkbox.completed::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .todo-content {
+            flex: 1;
+        }
+        
+        .todo-text {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .todo-text.completed {
+            text-decoration: line-through;
+            color: #999;
+        }
+        
+        .todo-meta {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .delete-btn {
+            padding: 8px;
+            background: #ff4757;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .delete-btn:hover {
+            background: #ff3742;
+            transform: scale(1.1);
+        }
+        
+        /* 챗봇 스타일 */
+        .chatbot-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        .chatbot-toggle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #FFB800, #FFA000);
+            border: none;
+            box-shadow: 0 4px 20px rgba(255, 184, 0, 0.4);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            transition: all 0.3s ease;
+            animation: pulse 2s infinite;
+        }
+        
+        .chatbot-toggle:hover {
+            transform: scale(1.1);
+        }
+        
+        .chatbot-window {
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            width: 350px;
+            max-width: calc(100vw - 40px);
+            height: 400px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .chatbot-header {
+            background: linear-gradient(45deg, #FFB800, #FFA000);
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .chatbot-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .message {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .message.user {
+            background: #e3f2fd;
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .message.bot {
+            background: #fff3e0;
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+        
+        .chatbot-input-container {
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chatbot-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
+        .chatbot-send {
+            padding: 10px 15px;
+            background: #FFB800;
+            border: none;
+            border-radius: 20px;
+            color: white;
+            cursor: pointer;
+        }
+        
+        /* 탭 관리 모달 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .tab-manager {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .tab-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .tab-name-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .remove-tab-btn {
+            padding: 5px 10px;
+            background: #ff4757;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .add-tab-btn {
+            padding: 12px;
+            background: #FFB800;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
+        /* 애니메이션 */
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        /* 반응형 디자인 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .input-group {
+                gap: 12px;
+            }
+            
+            .date-input-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .todo-item {
+                padding: 12px;
+            }
+            
+            .chatbot-window {
+                width: calc(100vw - 40px);
+                height: 60vh;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .app-title {
+                font-size: 24px;
+            }
+            
+            .tab {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+            
+            .add-todo-section, .todo-list {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <div class="bee-icon">🐝</div>
+                <div>
+                    <h1 class="app-title">꿀둥스</h1>
+                    <p class="subtitle">부부 할일관리</p>
+                </div>
+            </div>
+        </header>
+        
+        <div class="tab-container">
+            <button class="tab active" data-tab="all">전체</button>
+            <button class="tab" data-tab="husband">남편</button>
+            <button class="tab" data-tab="wife">아내</button>
+            <button class="tab" onclick="openTabManager()">+ 탭 관리</button>
+        </div>
+        
+        <div class="add-todo-section">
+            <div class="input-group">
+                <input type="text" class="todo-input" id="todoInput" placeholder="할일을 입력하세요...">
+                <div class="date-input-container">
+                    <input type="date" class="date-input" id="dateInput">
+                    <button class="calendar-btn" onclick="setToday()">📅</button>
+                </div>
+                <button class="add-btn" onclick="addTodo()">할일 추가</button>
+            </div>
+        </div>
+        
+        <div class="todo-list">
+            <div id="todoContainer">
+                <!-- 할일 목록이 여기에 표시됩니다 -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- 챗봇 -->
+    <div class="chatbot-container">
+        <button class="chatbot-toggle" onclick="toggleChatbot()">🐝</button>
+        <div class="chatbot-window" id="chatbotWindow">
+            <div class="chatbot-header">
+                <div class="bee-icon" style="width: 30px; height: 30px; font-size: 16px;">🐝</div>
+                <span>꿀버리</span>
+            </div>
+            <div class="chatbot-messages" id="chatbotMessages">
+                <div class="message bot">안녕하세요! 저는 꿀버리예요~ 할일 관리에 대해 궁금한 게 있으시면 언제든 물어보세요! 🍯</div>
+            </div>
+            <div class="chatbot-input-container">
+                <input type="text" class="chatbot-input" id="chatbotInput" placeholder="메시지를 입력하세요..." onkeypress="handleChatKeyPress(event)">
+                <button class="chatbot-send" onclick="sendMessage()">전송</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 탭 관리 모달 -->
+    <div class="modal" id="tabModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">탭 관리</h2>
+                <button class="close-btn" onclick="closeTabManager()">&times;</button>
+            </div>
+            <div class="tab-manager" id="tabManager">
+                <!-- 탭 관리 내용이 여기에 표시됩니다 -->
+            </div>
+            <button class="add-tab-btn" onclick="addNewTab()">새 탭 추가</button>
+        </div>
+    </div>
+
+    <script>
+        // 전역 변수
+        let currentTab = 'all';
+        let todos = [];
+        let tabs = ['all', 'husband', 'wife'];
+        let tabNames = {
+            'all': '전체',
+            'husband': '남편',
+            'wife': '아내'
+        };
+        
+        // Google Sheets API 설정
+        const GEMINI_API_KEY = 'AIzaSyACAoKxi4NsWm-zstIVpXLTh4apZmGz7Z0';
+        const SHEETS_ID = '1ekNvs8ZcttWD7FGSw1rU80fv1vseVp8we49u6ITjTJk';
+        
+        // PWA 서비스 워커 등록
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swCode = `
+                    const CACHE_NAME = 'honey-todo-v1';
+                    const urlsToCache = ['/'];
+                    
+                    self.addEventListener('install', (event) => {
+                        event.waitUntil(
+                            caches.open(CACHE_NAME)
+                                .then((cache) => cache.addAll(urlsToCache))
+                        );
+                    });
+                    
+                    self.addEventListener('fetch', (event) => {
+                        event.respondWith(
+                            caches.match(event.request)
+                                .then((response) => {
+                                    return response || fetch(event.request);
+                                })
+                        );
+                    });
+                `;
+                
+                const blob = new Blob([swCode], { type: 'application/javascript' });
+                const swUrl = URL.createObjectURL(blob);
+                
+                navigator.serviceWorker.register(swUrl)
+                    .then((registration) => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch((registrationError) => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+        
+        // 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            setToday();
+            loadTodos();
+            renderTabs();
+            renderTodos();
+        });
+        
+        // 오늘 날짜 설정
+        function setToday() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('dateInput').value = today;
+        }
+        
+        // 할일 추가
+        function addTodo() {
+            const todoInput = document.getElementById('todoInput');
+            const dateInput = document.getElementById('dateInput');
+            
+            if (!todoInput.value.trim()) {
+                alert('할일을 입력해주세요!');
+                return;
+            }
+            
+            const todo = {
+                id: Date.now(),
+                text: todoInput.value.trim(),
+                date: dateInput.value,
+                tab: currentTab === 'all' ? 'husband' : currentTab,
+                completed: false,
+                createdAt: new Date().toISOString()
+            };
+            
+            todos.push(todo);
+            saveTodos();
+            renderTodos();
+            
+            todoInput.value = '';
+            setToday();
+            
+            // 애니메이션 효과
+            todoInput.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                todoInput.style.transform = 'scale(1)';
+            }, 200);
+        }
+        
+        // 할일 토글
+        function toggleTodo(id) {
+            const todo = todos.find(t => t.id === id);
+            if (todo) {
+                todo.completed = !todo.completed;
+                saveTodos();
+                renderTodos();
+            }
+        }
+        
+        // 할일 삭제
+        function deleteTodo(id) {
+            if (confirm('정말 삭제하시겠습니까?')) {
+                todos = todos.filter(t => t.id !== id);
+                saveTodos();
+                renderTodos();
+            }
+        }
+        
+        // 탭 변경
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+            renderTodos();
+        }
+        
+        // 탭 렌더링
+        function renderTabs() {
+            const tabContainer = document.querySelector('.tab-container');
+            tabContainer.innerHTML = '';
+            
+            tabs.forEach(tab => {
+                const button = document.createElement('button');
+                button.className = `tab ${tab === currentTab ? 'active' : ''}`;
+                button.setAttribute('data-tab', tab);
+                button.textContent = tabNames[tab];
+                button.addEventListener('click', () => switchTab(tab));
+                tabContainer.appendChild(button);
+            });
+            
+            const manageBtn = document.createElement('button');
+            manageBtn.className = 'tab';
+            manageBtn.textContent = '+ 탭 관리';
+            manageBtn.addEventListener('click', openTabManager);
+            tabContainer.appendChild(manageBtn);
+        }
+        
+        // 할일 렌더링
+        function renderTodos() {
+            const container = document.getElementById('todoContainer');
+            const filteredTodos = currentTab === 'all' ? todos : todos.filter(t => t.tab === currentTab);
+            
+            if (filteredTodos.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #999;">
+                        <div style="font-size: 48px; margin-bottom: 20px;">📝</div>
+                        <p>아직 할일이 없어요.<br>새로운 할일을 추가해보세요!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // 날짜별로 그룹화
+            const groupedTodos = filteredTodos.reduce((groups, todo) => {
+                const date = todo.date || 'no-date';
+                if (!groups[date]) groups[date] = [];
+                groups[date].push(todo);
+                return groups;
+            }, {});
+            
+            container.innerHTML = '';
+            
+            Object.keys(groupedTodos).sort().forEach(date => {
+                const dateHeader = document.createElement('div');
+                dateHeader.style.cssText = 'font-weight: 600; color: #FFB800; margin: 20px 0 15px 0; font-size: 16px;';
+                dateHeader.textContent = date === 'no-date' ? '날짜 미지정' : formatDate(date);
+                container.appendChild(dateHeader);
+                
+                groupedTodos[date].forEach(todo => {
+                    const todoItem = document.createElement('div');
+                    todoItem.className = 'todo-item';
+                    todoItem.innerHTML = `
+                        <div class="todo-checkbox ${todo.completed ? 'completed' : ''}" onclick="toggleTodo(${todo.id})"></div>
+                        <div class="todo-content">
+                            <div class="todo-text ${todo.completed ? 'completed' : ''}">${todo.text}</div>
+                            <div class="todo-meta">${tabNames[todo.tab]} • ${formatDate(todo.date)}</div>
+                        </div>
+                        <button class="delete-btn" onclick="deleteTodo(${todo.id})">🗑️</button>
+                    `;
+                    container.appendChild(todoItem);
+                });
+            });
+        }
+        
+        // 날짜 포맷팅
+        function formatDate(dateString) {
+            if (!dateString) return '날짜 없음';
+            const date = new Date(dateString);
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            
+            if (date.toDateString() === today.toDateString()) return '오늘';
+            if (date.toDateString() === tomorrow.toDateString()) return '내일';
+            if (date.toDateString() === yesterday.toDateString()) return '어제';
+            
+            return date.toLocaleDateString('ko-KR', { 
+                month: 'long', 
+                day: 'numeric',
+                weekday: 'short' 
+            });
+        }
+        
+        // 데이터 저장/로드 (로컬스토리지)
+        function saveTodos() {
+            localStorage.setItem('honey-todos', JSON.stringify(todos));
+            localStorage.setItem('honey-tabs', JSON.stringify(tabs));
+            localStorage.setItem('honey-tab-names', JSON.stringify(tabNames));
+        }
+        
+        function loadTodos() {
+            const savedTodos = localStorage.getItem('honey-todos');
+            const savedTabs = localStorage.getItem('honey-tabs');
+            const savedTabNames = localStorage.getItem('honey-tab-names');
+            
+            if (savedTodos) todos = JSON.parse(savedTodos);
+            if (savedTabs) tabs = JSON.parse(savedTabs);
+            if (savedTabNames) tabNames = JSON.parse(savedTabNames);
+        }
+        
+        // 탭 관리
+        function openTabManager() {
+            document.getElementById('tabModal').style.display = 'flex';
+            renderTabManager();
+        }
+        
+        function closeTabManager() {
+            document.getElementById('tabModal').style.display = 'none';
+            renderTabs();
+        }
+        
+        function renderTabManager() {
+            const container = document.getElementById('tabManager');
+            container.innerHTML = '';
+            
+            tabs.filter(tab => tab !== 'all').forEach(tab => {
+                const tabItem = document.createElement('div');
+                tabItem.className = 'tab-item';
+                tabItem.innerHTML = `
+                    <input type="text" class="tab-name-input" value="${tabNames[tab]}" 
+                           onchange="updateTabName('${tab}', this.value)">
+                    ${tabs.length > 3 ? `<button class="remove-tab-btn" onclick="removeTab('${tab}')">삭제</button>` : ''}
+                `;
+                container.appendChild(tabItem);
+            });
+        }
+        
+        function updateTabName(tab, newName) {
+            if (newName.trim()) {
+                tabNames[tab] = newName.trim();
+                saveTodos();
+            }
+        }
+        
+        function addNewTab() {
+            const newTabId = 'tab_' + Date.now();
+            const newTabName = prompt('새 탭 이름을 입력하세요:');
+            
+            if (newTabName && newTabName.trim()) {
+                tabs.push(newTabId);
+                tabNames[newTabId] = newTabName.trim();
+                saveTodos();
+                renderTabManager();
+            }
+        }
+        
+        function removeTab(tab) {
+            if (tabs.length <= 3) {
+                alert('최소 2개의 탭은 유지해야 합니다.');
+                return;
+            }
+            
+            if (confirm(`'${tabNames[tab]}' 탭을 삭제하시겠습니까?\n이 탭의 모든 할일도 함께 삭제됩니다.`)) {
+                todos = todos.filter(t => t.tab !== tab);
+                tabs = tabs.filter(t => t !== tab);
+                delete tabNames[tab];
+                
+                if (currentTab === tab) {
+                    currentTab = 'all';
+                }
+                
+                saveTodos();
+                renderTabManager();
+                renderTodos();
+            }
+        }
+        
+        // 챗봇 기능
+        function toggleChatbot() {
+            const chatbotWindow = document.getElementById('chatbotWindow');
+            chatbotWindow.style.display = chatbotWindow.style.display === 'flex' ? 'none' : 'flex';
+        }
+        
+        function handleChatKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+        
+        async function sendMessage() {
+            const input = document.getElementById('chatbotInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // 사용자 메시지 추가
+            addChatMessage(message, 'user');
+            input.value = '';
+            
+            // 로딩 메시지 추가
+            const loadingId = addChatMessage('생각 중이에요... 🤔', 'bot');
+            
+            try {
+                // 현재 앱 상태 정보 준비
+                const appContext = `
+                현재 앱 상태:
+                - 총 할일 개수: ${todos.length}개
+                - 완료된 할일: ${todos.filter(t => t.completed).length}개
+                - 미완료 할일: ${todos.filter(t => !t.completed).length}개
+                - 현재 선택된 탭: ${tabNames[currentTab]}
+                - 사용 가능한 탭: ${tabs.map(t => tabNames[t]).join(', ')}
+                - 오늘 할일: ${todos.filter(t => t.date === new Date().toISOString().split('T')[0]).length}개
+                `;
+                
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_API_KEY}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: `당신은 '꿀버리'라는 이름의 귀여운 할일 관리 도우미입니다. 
+                                사용자의 할일 관리를 도와주는 친근하고 귀여운 비서 역할을 합니다.
+                                말투는 존댓말을 사용하되 친근하고 귀여운 톤으로 대화해주세요.
+                                이모지를 적절히 사용해서 대화를 더 즐겁게 만들어주세요.
+                                절대로 마크다운이나 코드 형태의 텍스트는 사용하지 마세요.
+                                
+                                ${appContext}
+                                
+                                사용자 질문: ${message}`
+                            }]
+                        }],
+                        generationConfig: {
+                            temperature: 0.7,
+                            maxOutputTokens: 500,
+                        },
+                    }),
+                });
+                
+                const data = await response.json();
+                const botResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || 
+                    '죄송해요, 지금은 답변을 드릴 수 없어요. 다시 시도해주세요! 😅';
+                
+                // 로딩 메시지 제거하고 실제 응답 추가
+                removeChatMessage(loadingId);
+                addChatMessage(botResponse, 'bot');
+                
+            } catch (error) {
+                console.error('Gemini API Error:', error);
+                removeChatMessage(loadingId);
+                addChatMessage('앗! 잠시 문제가 생겼어요. 조금 후에 다시 시도해주세요! 🙏', 'bot');
+            }
+        }
+        
+        function addChatMessage(message, sender) {
+            const messagesContainer = document.getElementById('chatbotMessages');
+            const messageElement = document.createElement('div');
+            const messageId = 'msg_' + Date.now();
+            
+            messageElement.id = messageId;
+            messageElement.className = `message ${sender}`;
+            messageElement.textContent = message;
+            
+            messagesContainer.appendChild(messageElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            return messageId;
+        }
+        
+        function removeChatMessage(messageId) {
+            const messageElement = document.getElementById(messageId);
+            if (messageElement) {
+                messageElement.remove();
+            }
+        }
+        
+        // 키보드 이벤트
+        document.getElementById('todoInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addTodo();
+            }
+        });
+        
+        // PWA 설치 프롬프트
+        let deferredPrompt;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // 설치 안내 메시지 표시
+            setTimeout(() => {
+                if (confirm('꿀둥스를 홈 화면에 설치하시겠습니까? 앱처럼 사용할 수 있어요! 🍯')) {
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then((choiceResult) => {
+                        if (choiceResult.outcome === 'accepted') {
+                            console.log('사용자가 PWA 설치를 승인했습니다.');
+                        }
+                        deferredPrompt = null;
+                    });
+                }
+            }, 3000);
+        });
+        
+        // 앱이 설치되었을 때
+        window.addEventListener('appinstalled', (evt) => {
+            console.log('꿀둥스가 성공적으로 설치되었습니다!');
+            alert('꿀둥스가 성공적으로 설치되었어요! 이제 홈 화면에서 바로 사용하실 수 있습니다! 🎉');
+        });
+        
+        // 온라인/오프라인 상태 감지
+        window.addEventListener('online', () => {
+            console.log('온라인 상태입니다.');
+        });
+        
+        window.addEventListener('offline', () => {
+            console.log('오프라인 상태입니다.');
+            alert('인터넷 연결이 끊어졌어요. 일부 기능이 제한될 수 있습니다.');
+        });
+    </script>
+</body>
+</html>
