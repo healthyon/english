@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>꿀둥스 - 부부용 할일관리</title>
+    
+    <!-- PWA 메타 태그 -->
+    <meta name="theme-color" content="#FFD700">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="꿀둥스">
+    <meta name="description" content="부부가 함께 사용하는 귀여운 할일관리 앱">
+    
+    <!-- PWA 아이콘 -->
+    <link rel="icon" type="image/png" sizes="192x192" href="./assets/icon-192x192.png">
+    <link rel="apple-touch-icon" href="./assets/icon-192x192.png">
+    
+    <!-- PWA 매니페스트 -->
+    <link rel="manifest" href="./manifest.json">
+    
+    <!-- CSS 파일 연결 -->
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍯 꿀둥스 🍯</h1>
+            <p>부부가 함께하는 달콤한 할일관리</p>
+        </div>
+
+        <!-- 탭 관리 섹션 -->
+        <div class="tab-management">
+            <h3>탭 관리</h3>
+            <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+                <input type="text" id="newTabName" placeholder="새 탭 이름 입력" style="flex: 1; min-width: 200px;">
+                <button class="btn btn-secondary btn-small" onclick="addTab()">탭 추가</button>
+                <button class="btn btn-danger btn-small" onclick="deleteCurrentTab()">현재 탭 삭제</button>
+            </div>
+        </div>
+
+        <!-- 탭 버튼들 -->
+        <div class="tab-container" id="tabContainer">
+            <button class="tab active" data-tab="전체" onclick="switchTab('전체')">전체</button>
+            <button class="tab" data-tab="남편" onclick="switchTab('남편')">남편</button>
+            <button class="tab" data-tab="아내" onclick="switchTab('아내')">아내</button>
+        </div>
+
+        <!-- 할일 추가 폼 -->
+        <div class="task-form">
+            <h3>새 할일 추가</h3>
+            <div class="form-group">
+                <label for="taskTab">탭 선택:</label>
+                <select id="taskTab">
+                    <option value="남편">남편</option>
+                    <option value="아내">아내</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="taskTitle">할일 제목:</label>
+                <input type="text" id="taskTitle" placeholder="할일을 입력하세요">
+            </div>
+            <div class="form-group">
+                <label for="taskDescription">할일 설명:</label>
+                <textarea id="taskDescription" placeholder="할일에 대한 자세한 설명을 입력하세요" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="taskDate">날짜:</label>
+                <div class="date-input-group">
+                    <input type="date" id="taskDate">
+                    <button class="btn btn-secondary btn-small" onclick="setToday()">오늘</button>
+                    <button class="btn btn-secondary btn-small" onclick="setTomorrow()">내일</button>
+                </div>
+            </div>
+            <button class="btn" onclick="addTask()">할일 추가</button>
+        </div>
+
+        <!-- 필터 버튼들 -->
+        <div class="filter-buttons">
+            <button class="btn btn-secondary btn-small" onclick="filterTasks('all')">전체</button>
+            <button class="btn btn-secondary btn-small" onclick="filterTasks('today')">오늘</button>
+            <button class="btn btn-secondary btn-small" onclick="filterTasks('week')">이번 주</button>
+            <button class="btn btn-secondary btn-small" onclick="filterTasks('completed')">완료됨</button>
+        </div>
+
+        <!-- 할일 목록 -->
+        <div class="task-list" id="taskList">
+            <h3>할일 목록</h3>
+            <div id="tasks"></div>
+        </div>
+
+        <!-- 로딩 상태 -->
+        <div class="loading" id="loading">
+            <p>데이터를 불러오는 중...</p>
+        </div>
+    </div>
+
+    <!-- 플로팅 챗봇 -->
+    <div class="floating-chat">
+        <button class="chat-toggle" onclick="toggleChat()">🐝</button>
+        <div class="chat-window" id="chatWindow">
+            <div class="chat-header">
+                <div>🐝 꿀버리</div>
+                <div style="font-size: 12px; opacity: 0.8;">귀여운 할일 비서</div>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="message bot">
+                    안녕하세요! 저는 꿀버리예요 🍯<br>
+                    할일 관리를 도와드릴게요!<br>
+                    궁금한 것이 있으면 언제든 물어보세요~
+                </div>
+            </div>
+            <div class="chat-input-container">
+                <input type="text" class="chat-input" id="chatInput" placeholder="꿀버리에게 메시지를 보내세요..." onkeypress="handleChatKeyPress(event)">
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript 파일 연결 -->
+    <script src="./js/app.js"></script>
+</body>
+</html>

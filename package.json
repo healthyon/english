@@ -1,0 +1,36 @@
+{
+  "name": "honey-task-app",
+  "version": "1.0.0",
+  "description": "부부가 함께 사용하는 귀여운 할일관리 PWA",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve .",
+    "dev": "npx serve . --listen 3000",
+    "build": "echo 'No build process needed for vanilla JS PWA'",
+    "serve": "python -m http.server 8000"
+  },
+  "keywords": [
+    "pwa",
+    "task-management",
+    "todo",
+    "productivity",
+    "korean",
+    "couples"
+  ],
+  "author": "꿀둥스 개발팀",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/honey-task-app.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/honey-task-app/issues"
+  },
+  "homepage": "https://your-username.github.io/honey-task-app",
+  "devDependencies": {
+    "serve": "^14.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
