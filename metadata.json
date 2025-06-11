@@ -1,7 +1,0 @@
-
-{
-  "name": "꿀머니 - 스마트 가계부",
-  "description": "지출을 기록하고, 탭으로 분류하며, AI 챗봇 꿀머니와 함께 스마트한 소비 습관을 만들어보세요. PWA로 설치하여 앱처럼 사용할 수 있습니다.",
-  "manifestPath": "manifest.json",
-  "requestFramePermissions": []
-}
